@@ -10,7 +10,7 @@ import (
 
 	"github.com/zclconf/go-cty/cty"
 
-	"github.com/nerdmenot/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/engine"
 )
 
 // TestRemoteDecode proves config-decode over the wire end to end: a plugin parses

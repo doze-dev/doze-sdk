@@ -7,7 +7,7 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	goplugin "github.com/hashicorp/go-plugin"
 
-	"github.com/nerdmenot/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/engine"
 )
 
 // Host is a launched engine plugin: Driver adapts it to the in-tree engine.Driver

@@ -7,7 +7,7 @@ SDK. Your engine is no different from the built-in ones: there is no privileged
 path, so anyone can write one.
 
 ```
-go get github.com/nerdmenot/doze-sdk
+go get github.com/doze-dev/doze-sdk
 ```
 
 ## Three packages
@@ -85,7 +85,7 @@ DOZE_MODULES_MIRROR=https://your-host/modules doze up
 
 doze fetches the binary for the host platform, verifies its checksum, caches it
 under `~/.doze/modules`, pins it in `doze.lock`, and launches it. The official
-engines live in [`doze-modules`](https://github.com/NerdMeNot/doze-modules);
+engines live in [`doze-modules`](https://github.com/doze-dev/doze-modules);
 adding one there is a PR. There is no other privileged registry — third-party
 engines distribute via the mirror override.
 
@@ -94,8 +94,8 @@ engines distribute via the mirror override.
 This SDK is **pre-1.0** (`v0.x`): the contract may still change between minor
 versions — pin a version and read the release notes when you bump.
 
-- **Module path / SemVer.** Import `github.com/nerdmenot/doze-sdk` and pin a tag
-  (`go get github.com/nerdmenot/doze-sdk@v0.1.0`). Per Go SemVer, `v0.x` makes no
+- **Module path / SemVer.** Import `github.com/doze-dev/doze-sdk` and pin a tag
+  (`go get github.com/doze-dev/doze-sdk@v0.1.0`). Per Go SemVer, `v0.x` makes no
   compatibility promise; `v1`+ will (with a `/vN` path for any future major).
 - **Wire handshake.** Host↔plugin compatibility is gated by
   `plugin.Handshake.ProtocolVersion` (currently `1`). A wire-incompatible protocol

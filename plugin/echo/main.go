@@ -6,8 +6,8 @@ package main
 import (
 	"context"
 
-	"github.com/nerdmenot/doze-sdk/engine"
-	dozeplugin "github.com/nerdmenot/doze-sdk/plugin"
+	"github.com/doze-dev/doze-sdk/engine"
+	dozeplugin "github.com/doze-dev/doze-sdk/plugin"
 )
 
 type driver struct{}

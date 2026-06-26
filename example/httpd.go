@@ -29,8 +29,8 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
 
-	"github.com/nerdmenot/doze-sdk/engine"
-	dozeplugin "github.com/nerdmenot/doze-sdk/plugin"
+	"github.com/doze-dev/doze-sdk/engine"
+	dozeplugin "github.com/doze-dev/doze-sdk/plugin"
 )
 
 // Config is the decoded body of an `httpd "name" { … }` block. doze hands the

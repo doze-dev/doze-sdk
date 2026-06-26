@@ -11,8 +11,8 @@ import (
 	goplugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
 
-	"github.com/nerdmenot/doze-sdk/engine"
-	"github.com/nerdmenot/doze-sdk/plugin/proto"
+	"github.com/doze-dev/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/plugin/proto"
 )
 
 // Handshake gates host↔plugin compatibility; a mismatched ProtocolVersion or

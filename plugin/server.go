@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/nerdmenot/doze-sdk/binaries"
-	"github.com/nerdmenot/doze-sdk/engine"
-	"github.com/nerdmenot/doze-sdk/plugin/proto"
+	"github.com/doze-dev/doze-sdk/binaries"
+	"github.com/doze-dev/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/plugin/proto"
 )
 
 // engineServer adapts an in-tree engine.Driver (+ capabilities) to the Engine gRPC

@@ -16,7 +16,7 @@ package binaries
 // "<root>/<engine>", serving that engine's index.json and archives. Override per
 // engine with DOZE_<ENGINE>_MIRROR, or set DOZE_MIRROR to a root that the engine
 // name is joined to.
-const DefaultMirrorRoot = "https://github.com/NerdMeNot/doze-binaries/releases/download"
+const DefaultMirrorRoot = "https://github.com/doze-dev/doze-binaries/releases/download"
 
 // Manifest is the multi-engine index the mirror serves at <base>/index.yaml.
 type Manifest struct {
@@ -34,4 +34,9 @@ type EngineManifest struct {
 type ManifestArtifact struct {
 	URL    string `yaml:"url"`
 	SHA256 string `yaml:"sha256"`
+	// Sig is a base64 ed25519 signature over the lowercase-hex SHA256, made with
+	// the publisher's key. Verified against a Manager.SigningKey when one is set
+	// (the signed module-registry path); ignored for unsigned mirrors (the engine
+	// binaries from doze-binaries).
+	Sig string `yaml:"sig,omitempty"`
 }

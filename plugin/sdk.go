@@ -3,7 +3,7 @@ package plugin
 import (
 	goplugin "github.com/hashicorp/go-plugin"
 
-	"github.com/nerdmenot/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/engine"
 )
 
 // Serve runs drv as a doze engine plugin. An engine module's main() implements the

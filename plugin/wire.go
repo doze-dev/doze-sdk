@@ -12,8 +12,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/nerdmenot/doze-sdk/engine"
-	"github.com/nerdmenot/doze-sdk/plugin/proto"
+	"github.com/doze-dev/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/plugin/proto"
 )
 
 var _ engine.WireProxy = (*pluginDriver)(nil)

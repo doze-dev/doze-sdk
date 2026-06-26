@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/nerdmenot/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/engine"
 )
 
 // EnvResolver resolves an engine type to a plugin binary via DOZE_<TYPE>_PLUGIN —

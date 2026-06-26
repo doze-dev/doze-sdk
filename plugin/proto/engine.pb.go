@@ -2698,7 +2698,7 @@ const file_plugin_proto_engine_proto_rawDesc = "" +
 	"\x0eAdvertisedAddr\x12\x1a.dozeplugin.v1.AddrRequest\x1a\x1b.dozeplugin.v1.AddrResponse\x12L\n" +
 	"\x0eEnsureTemplate\x12$.dozeplugin.v1.EnsureTemplateRequest\x1a\x14.dozeplugin.v1.Empty\x12J\n" +
 	"\rCloneTemplate\x12#.dozeplugin.v1.CloneTemplateRequest\x1a\x14.dozeplugin.v1.Empty\x12A\n" +
-	"\bWireAddr\x12\x14.dozeplugin.v1.Empty\x1a\x1f.dozeplugin.v1.WireAddrResponseB2Z0github.com/nerdmenot/doze-sdk/plugin/proto;protob\x06proto3"
+	"\bWireAddr\x12\x14.dozeplugin.v1.Empty\x1a\x1f.dozeplugin.v1.WireAddrResponseB1Z/github.com/doze-dev/doze-sdk/plugin/proto;protob\x06proto3"
 
 var (
 	file_plugin_proto_engine_proto_rawDescOnce sync.Once

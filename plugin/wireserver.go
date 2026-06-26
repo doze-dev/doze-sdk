@@ -18,7 +18,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/nerdmenot/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/engine"
 )
 
 // maxWireHeader bounds the JSON control header that accompanies a handed-off fd

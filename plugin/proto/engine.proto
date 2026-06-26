@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package dozeplugin.v1;
 
-option go_package = "github.com/nerdmenot/doze-sdk/plugin/proto;proto";
+option go_package = "github.com/doze-dev/doze-sdk/plugin/proto;proto";
 
 // Engine is the contract every doze engine module implements as an out-of-process
 // gRPC plugin (HashiCorp go-plugin). It is the wire serialization of the in-tree

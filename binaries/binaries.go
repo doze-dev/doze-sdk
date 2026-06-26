@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -18,7 +20,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/nerdmenot/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/engine"
 )
 
 // Manager fetches and caches engine toolchains from the mirror. It holds no
@@ -33,6 +35,13 @@ type Manager struct {
 	// The modules fetcher sets it so plugin modules resolve against doze-modules
 	// instead of doze-binaries while reusing this fetch/verify/cache machinery.
 	MirrorRoot string
+
+	// SigningKey, when set, requires every fetched artifact to carry a valid
+	// ed25519 signature (ManifestArtifact.Sig) over its SHA256, made with this key.
+	// The module registry fetcher sets it to the publisher's namespace key, so an
+	// unsigned or wrongly-signed plugin is rejected. Nil ⇒ checksum-only (engine
+	// binaries).
+	SigningKey ed25519.PublicKey
 
 	manifests map[string]*Manifest // memoized per engine (each has its own release/index.json)
 }
@@ -186,6 +195,14 @@ func (m *Manager) Ensure(ctx context.Context, eng, full string, plat engine.Plat
 		return "", "", fmt.Errorf("no checksum available to verify %s %s (%s)", eng, full, plat.Triple)
 	}
 
+	// Signed registry path: the artifact must carry a valid publisher signature
+	// over its checksum. Rejects unsigned or tampered modules.
+	if m.SigningKey != nil {
+		if err := verifySig(m.SigningKey, gotSum, art.Sig); err != nil {
+			return "", "", fmt.Errorf("signature check failed for %s %s (%s): %w", eng, full, plat.Triple, err)
+		}
+	}
+
 	tmp := contentDir + ".tmp"
 	_ = os.RemoveAll(tmp)
 	if err := extractTarGz(archive, tmp); err != nil {
@@ -217,6 +234,11 @@ func (m *Manager) Ensure(ctx context.Context, eng, full string, plat engine.Plat
 	m.logf("cached %s %s at %s", eng, full, contentDir)
 	return binDir, digest, nil
 }
+
+// Fetch retrieves a URL through the same transport Ensure uses, including the
+// file:// shortcut for local/dev mirrors. The registry fetcher uses it to pull a
+// namespace's keys.json before any signed artifact is downloaded.
+func (m *Manager) Fetch(url string) ([]byte, error) { return m.get(url) }
 
 func (m *Manager) get(url string) ([]byte, error) {
 	// A file:// mirror (or a self-hosted mirror on a local path) is read directly.
@@ -313,4 +335,33 @@ func extractTarGz(data []byte, dest string) error {
 		}
 	}
 	return nil
+}
+
+// verifySig checks a base64 ed25519 signature over the lowercase-hex sha against
+// key. A missing signature is a failure when a key is configured.
+func verifySig(key ed25519.PublicKey, shaHex, sigB64 string) error {
+	if sigB64 == "" {
+		return fmt.Errorf("artifact is unsigned")
+	}
+	sig, err := base64.StdEncoding.DecodeString(sigB64)
+	if err != nil {
+		return fmt.Errorf("malformed signature: %w", err)
+	}
+	if !ed25519.Verify(key, []byte(shaHex), sig) {
+		return fmt.Errorf("signature does not match the publisher key")
+	}
+	return nil
+}
+
+// ParsePublicKey decodes a base64 ed25519 public key (the form a registry's
+// keys.json carries). Callers set it as Manager.SigningKey.
+func ParsePublicKey(b64 string) (ed25519.PublicKey, error) {
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimSpace(b64))
+	if err != nil {
+		return nil, fmt.Errorf("decoding public key: %w", err)
+	}
+	if len(raw) != ed25519.PublicKeySize {
+		return nil, fmt.Errorf("public key is %d bytes, want %d", len(raw), ed25519.PublicKeySize)
+	}
+	return ed25519.PublicKey(raw), nil
 }

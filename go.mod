@@ -1,4 +1,4 @@
-module github.com/nerdmenot/doze-sdk
+module github.com/doze-dev/doze-sdk
 
 go 1.26.0
 

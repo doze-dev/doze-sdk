@@ -5,8 +5,8 @@ import (
 	"encoding/gob"
 	"time"
 
-	"github.com/nerdmenot/doze-sdk/engine"
-	"github.com/nerdmenot/doze-sdk/plugin/proto"
+	"github.com/doze-dev/doze-sdk/engine"
+	"github.com/doze-dev/doze-sdk/plugin/proto"
 )
 
 // The engine config (engine.EngineConfig = any) crosses the wire as gob bytes.
