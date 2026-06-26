@@ -62,7 +62,6 @@ message Instance {
   Endpoint endpoint = 7;
   bytes spec = 8; // the plugin's own serialized config (opaque to core)
   map<string, Dep> deps = 9;
-  map<string, string> injected_env = 10;
 }
 
 message Ready {

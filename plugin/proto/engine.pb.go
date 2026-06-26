@@ -456,7 +456,6 @@ type Instance struct {
 	Endpoint      *Endpoint              `protobuf:"bytes,7,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
 	Spec          []byte                 `protobuf:"bytes,8,opt,name=spec,proto3" json:"spec,omitempty"` // the plugin's own serialized config (opaque to core)
 	Deps          map[string]*Dep        `protobuf:"bytes,9,rep,name=deps,proto3" json:"deps,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	InjectedEnv   map[string]string      `protobuf:"bytes,10,rep,name=injected_env,json=injectedEnv,proto3" json:"injected_env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -550,13 +549,6 @@ func (x *Instance) GetSpec() []byte {
 func (x *Instance) GetDeps() map[string]*Dep {
 	if x != nil {
 		return x.Deps
-	}
-	return nil
-}
-
-func (x *Instance) GetInjectedEnv() map[string]string {
-	if x != nil {
-		return x.InjectedEnv
 	}
 	return nil
 }
@@ -2633,7 +2625,7 @@ const file_plugin_proto_engine_proto_rawDesc = "" +
 	"\n" +
 	"socket_dir\x18\x03 \x01(\tR\tsocketDir\x12\x18\n" +
 	"\abackend\x18\x04 \x01(\tR\abackend\x12\x10\n" +
-	"\x03url\x18\x05 \x01(\tR\x03url\"\xf4\x03\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\"\xe7\x02\n" +
 	"\bInstance\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x18\n" +
@@ -2644,15 +2636,10 @@ const file_plugin_proto_engine_proto_rawDesc = "" +
 	"\x04port\x18\x06 \x01(\x05R\x04port\x123\n" +
 	"\bendpoint\x18\a \x01(\v2\x17.dozeplugin.v1.EndpointR\bendpoint\x12\x12\n" +
 	"\x04spec\x18\b \x01(\fR\x04spec\x125\n" +
-	"\x04deps\x18\t \x03(\v2!.dozeplugin.v1.Instance.DepsEntryR\x04deps\x12K\n" +
-	"\finjected_env\x18\n" +
-	" \x03(\v2(.dozeplugin.v1.Instance.InjectedEnvEntryR\vinjectedEnv\x1aK\n" +
+	"\x04deps\x18\t \x03(\v2!.dozeplugin.v1.Instance.DepsEntryR\x04deps\x1aK\n" +
 	"\tDepsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12(\n" +
-	"\x05value\x18\x02 \x01(\v2\x12.dozeplugin.v1.DepR\x05value:\x028\x01\x1a>\n" +
-	"\x10InjectedEnvEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8d\x01\n" +
+	"\x05value\x18\x02 \x01(\v2\x12.dozeplugin.v1.DepR\x05value:\x028\x01\"\x8d\x01\n" +
 	"\x05Ready\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x16\n" +
 	"\x06target\x18\x02 \x01(\tR\x06target\x12\x1f\n" +
@@ -2831,7 +2818,7 @@ func file_plugin_proto_engine_proto_rawDescGZIP() []byte {
 	return file_plugin_proto_engine_proto_rawDescData
 }
 
-var file_plugin_proto_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 54)
+var file_plugin_proto_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 53)
 var file_plugin_proto_engine_proto_goTypes = []any{
 	(*Empty)(nil),                 // 0: dozeplugin.v1.Empty
 	(*Platform)(nil),              // 1: dozeplugin.v1.Platform
@@ -2883,10 +2870,9 @@ var file_plugin_proto_engine_proto_goTypes = []any{
 	nil,                           // 47: dozeplugin.v1.Toolchain.ToolsEntry
 	nil,                           // 48: dozeplugin.v1.Pin.HashesEntry
 	nil,                           // 49: dozeplugin.v1.Instance.DepsEntry
-	nil,                           // 50: dozeplugin.v1.Instance.InjectedEnvEntry
-	nil,                           // 51: dozeplugin.v1.DecodeRequest.VariablesEntry
-	nil,                           // 52: dozeplugin.v1.AttributesResponse.AttrsEntry
-	nil,                           // 53: dozeplugin.v1.EnvResponse.EnvEntry
+	nil,                           // 50: dozeplugin.v1.DecodeRequest.VariablesEntry
+	nil,                           // 51: dozeplugin.v1.AttributesResponse.AttrsEntry
+	nil,                           // 52: dozeplugin.v1.EnvResponse.EnvEntry
 }
 var file_plugin_proto_engine_proto_depIdxs = []int32{
 	47, // 0: dozeplugin.v1.Toolchain.tools:type_name -> dozeplugin.v1.Toolchain.ToolsEntry
@@ -2894,94 +2880,93 @@ var file_plugin_proto_engine_proto_depIdxs = []int32{
 	3,  // 2: dozeplugin.v1.LockEntry.pin:type_name -> dozeplugin.v1.Pin
 	5,  // 3: dozeplugin.v1.Instance.endpoint:type_name -> dozeplugin.v1.Endpoint
 	49, // 4: dozeplugin.v1.Instance.deps:type_name -> dozeplugin.v1.Instance.DepsEntry
-	50, // 5: dozeplugin.v1.Instance.injected_env:type_name -> dozeplugin.v1.Instance.InjectedEnvEntry
-	8,  // 6: dozeplugin.v1.SpawnSpec.ready:type_name -> dozeplugin.v1.Ready
-	9,  // 7: dozeplugin.v1.SpawnPlan.specs:type_name -> dozeplugin.v1.SpawnSpec
-	51, // 8: dozeplugin.v1.DecodeRequest.variables:type_name -> dozeplugin.v1.DecodeRequest.VariablesEntry
-	1,  // 9: dozeplugin.v1.ResolveRequest.platform:type_name -> dozeplugin.v1.Platform
-	4,  // 10: dozeplugin.v1.ResolveRequest.locked:type_name -> dozeplugin.v1.LockEntry
-	2,  // 11: dozeplugin.v1.ResolveResponse.toolchain:type_name -> dozeplugin.v1.Toolchain
-	4,  // 12: dozeplugin.v1.ResolveResponse.recorded:type_name -> dozeplugin.v1.LockEntry
-	7,  // 13: dozeplugin.v1.ProvisionRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 14: dozeplugin.v1.ProvisionRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	7,  // 15: dozeplugin.v1.ConnStringRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 16: dozeplugin.v1.ConnStringRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	7,  // 17: dozeplugin.v1.PlanRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 18: dozeplugin.v1.PlanRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	2,  // 19: dozeplugin.v1.EnsureTemplateRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	7,  // 20: dozeplugin.v1.ConvergeRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 21: dozeplugin.v1.ConvergeRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	5,  // 22: dozeplugin.v1.ConvergeRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	7,  // 23: dozeplugin.v1.ObjectsRequest.instance:type_name -> dozeplugin.v1.Instance
-	12, // 24: dozeplugin.v1.ObjectsResponse.objects:type_name -> dozeplugin.v1.Object
-	7,  // 25: dozeplugin.v1.PruneRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 26: dozeplugin.v1.PruneRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	5,  // 27: dozeplugin.v1.PruneRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	12, // 28: dozeplugin.v1.PruneRequest.removed:type_name -> dozeplugin.v1.Object
-	7,  // 29: dozeplugin.v1.AttributesRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 30: dozeplugin.v1.AttributesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	52, // 31: dozeplugin.v1.AttributesResponse.attrs:type_name -> dozeplugin.v1.AttributesResponse.AttrsEntry
-	7,  // 32: dozeplugin.v1.EnvRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 33: dozeplugin.v1.EnvRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	53, // 34: dozeplugin.v1.EnvResponse.env:type_name -> dozeplugin.v1.EnvResponse.EnvEntry
-	7,  // 35: dozeplugin.v1.BackendURLRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 36: dozeplugin.v1.SupervisedRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 37: dozeplugin.v1.HookRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 38: dozeplugin.v1.HealthRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 39: dozeplugin.v1.RestartPolicyRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 40: dozeplugin.v1.AddrRequest.instance:type_name -> dozeplugin.v1.Instance
-	6,  // 41: dozeplugin.v1.Instance.DepsEntry.value:type_name -> dozeplugin.v1.Dep
-	0,  // 42: dozeplugin.v1.Engine.Type:input_type -> dozeplugin.v1.Empty
-	0,  // 43: dozeplugin.v1.Engine.Capabilities:input_type -> dozeplugin.v1.Empty
-	15, // 44: dozeplugin.v1.Engine.DecodeConfig:input_type -> dozeplugin.v1.DecodeRequest
-	17, // 45: dozeplugin.v1.Engine.Resolve:input_type -> dozeplugin.v1.ResolveRequest
-	19, // 46: dozeplugin.v1.Engine.Provision:input_type -> dozeplugin.v1.ProvisionRequest
-	20, // 47: dozeplugin.v1.Engine.Provisioned:input_type -> dozeplugin.v1.ProvisionedRequest
-	22, // 48: dozeplugin.v1.Engine.BackendSocket:input_type -> dozeplugin.v1.BackendSocketRequest
-	24, // 49: dozeplugin.v1.Engine.ConnString:input_type -> dozeplugin.v1.ConnStringRequest
-	26, // 50: dozeplugin.v1.Engine.Plan:input_type -> dozeplugin.v1.PlanRequest
-	30, // 51: dozeplugin.v1.Engine.Converge:input_type -> dozeplugin.v1.ConvergeRequest
-	31, // 52: dozeplugin.v1.Engine.Objects:input_type -> dozeplugin.v1.ObjectsRequest
-	33, // 53: dozeplugin.v1.Engine.Prune:input_type -> dozeplugin.v1.PruneRequest
-	34, // 54: dozeplugin.v1.Engine.Attributes:input_type -> dozeplugin.v1.AttributesRequest
-	36, // 55: dozeplugin.v1.Engine.Env:input_type -> dozeplugin.v1.EnvRequest
-	38, // 56: dozeplugin.v1.Engine.BackendURL:input_type -> dozeplugin.v1.BackendURLRequest
-	40, // 57: dozeplugin.v1.Engine.Supervised:input_type -> dozeplugin.v1.SupervisedRequest
-	42, // 58: dozeplugin.v1.Engine.Hook:input_type -> dozeplugin.v1.HookRequest
-	43, // 59: dozeplugin.v1.Engine.CheckHealth:input_type -> dozeplugin.v1.HealthRequest
-	44, // 60: dozeplugin.v1.Engine.RestartPolicy:input_type -> dozeplugin.v1.RestartPolicyRequest
-	45, // 61: dozeplugin.v1.Engine.AdvertisedAddr:input_type -> dozeplugin.v1.AddrRequest
-	27, // 62: dozeplugin.v1.Engine.EnsureTemplate:input_type -> dozeplugin.v1.EnsureTemplateRequest
-	28, // 63: dozeplugin.v1.Engine.CloneTemplate:input_type -> dozeplugin.v1.CloneTemplateRequest
-	0,  // 64: dozeplugin.v1.Engine.WireAddr:input_type -> dozeplugin.v1.Empty
-	13, // 65: dozeplugin.v1.Engine.Type:output_type -> dozeplugin.v1.TypeResponse
-	14, // 66: dozeplugin.v1.Engine.Capabilities:output_type -> dozeplugin.v1.CapabilitiesResponse
-	16, // 67: dozeplugin.v1.Engine.DecodeConfig:output_type -> dozeplugin.v1.DecodeResponse
-	18, // 68: dozeplugin.v1.Engine.Resolve:output_type -> dozeplugin.v1.ResolveResponse
-	0,  // 69: dozeplugin.v1.Engine.Provision:output_type -> dozeplugin.v1.Empty
-	21, // 70: dozeplugin.v1.Engine.Provisioned:output_type -> dozeplugin.v1.ProvisionedResponse
-	23, // 71: dozeplugin.v1.Engine.BackendSocket:output_type -> dozeplugin.v1.BackendSocketResponse
-	25, // 72: dozeplugin.v1.Engine.ConnString:output_type -> dozeplugin.v1.ConnStringResponse
-	10, // 73: dozeplugin.v1.Engine.Plan:output_type -> dozeplugin.v1.SpawnPlan
-	0,  // 74: dozeplugin.v1.Engine.Converge:output_type -> dozeplugin.v1.Empty
-	32, // 75: dozeplugin.v1.Engine.Objects:output_type -> dozeplugin.v1.ObjectsResponse
-	0,  // 76: dozeplugin.v1.Engine.Prune:output_type -> dozeplugin.v1.Empty
-	35, // 77: dozeplugin.v1.Engine.Attributes:output_type -> dozeplugin.v1.AttributesResponse
-	37, // 78: dozeplugin.v1.Engine.Env:output_type -> dozeplugin.v1.EnvResponse
-	39, // 79: dozeplugin.v1.Engine.BackendURL:output_type -> dozeplugin.v1.BackendURLResponse
-	41, // 80: dozeplugin.v1.Engine.Supervised:output_type -> dozeplugin.v1.SupervisedResponse
-	0,  // 81: dozeplugin.v1.Engine.Hook:output_type -> dozeplugin.v1.Empty
-	0,  // 82: dozeplugin.v1.Engine.CheckHealth:output_type -> dozeplugin.v1.Empty
-	11, // 83: dozeplugin.v1.Engine.RestartPolicy:output_type -> dozeplugin.v1.RestartSpec
-	46, // 84: dozeplugin.v1.Engine.AdvertisedAddr:output_type -> dozeplugin.v1.AddrResponse
-	0,  // 85: dozeplugin.v1.Engine.EnsureTemplate:output_type -> dozeplugin.v1.Empty
-	0,  // 86: dozeplugin.v1.Engine.CloneTemplate:output_type -> dozeplugin.v1.Empty
-	29, // 87: dozeplugin.v1.Engine.WireAddr:output_type -> dozeplugin.v1.WireAddrResponse
-	65, // [65:88] is the sub-list for method output_type
-	42, // [42:65] is the sub-list for method input_type
-	42, // [42:42] is the sub-list for extension type_name
-	42, // [42:42] is the sub-list for extension extendee
-	0,  // [0:42] is the sub-list for field type_name
+	8,  // 5: dozeplugin.v1.SpawnSpec.ready:type_name -> dozeplugin.v1.Ready
+	9,  // 6: dozeplugin.v1.SpawnPlan.specs:type_name -> dozeplugin.v1.SpawnSpec
+	50, // 7: dozeplugin.v1.DecodeRequest.variables:type_name -> dozeplugin.v1.DecodeRequest.VariablesEntry
+	1,  // 8: dozeplugin.v1.ResolveRequest.platform:type_name -> dozeplugin.v1.Platform
+	4,  // 9: dozeplugin.v1.ResolveRequest.locked:type_name -> dozeplugin.v1.LockEntry
+	2,  // 10: dozeplugin.v1.ResolveResponse.toolchain:type_name -> dozeplugin.v1.Toolchain
+	4,  // 11: dozeplugin.v1.ResolveResponse.recorded:type_name -> dozeplugin.v1.LockEntry
+	7,  // 12: dozeplugin.v1.ProvisionRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 13: dozeplugin.v1.ProvisionRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	7,  // 14: dozeplugin.v1.ConnStringRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 15: dozeplugin.v1.ConnStringRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	7,  // 16: dozeplugin.v1.PlanRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 17: dozeplugin.v1.PlanRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	2,  // 18: dozeplugin.v1.EnsureTemplateRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	7,  // 19: dozeplugin.v1.ConvergeRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 20: dozeplugin.v1.ConvergeRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	5,  // 21: dozeplugin.v1.ConvergeRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	7,  // 22: dozeplugin.v1.ObjectsRequest.instance:type_name -> dozeplugin.v1.Instance
+	12, // 23: dozeplugin.v1.ObjectsResponse.objects:type_name -> dozeplugin.v1.Object
+	7,  // 24: dozeplugin.v1.PruneRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 25: dozeplugin.v1.PruneRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	5,  // 26: dozeplugin.v1.PruneRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	12, // 27: dozeplugin.v1.PruneRequest.removed:type_name -> dozeplugin.v1.Object
+	7,  // 28: dozeplugin.v1.AttributesRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 29: dozeplugin.v1.AttributesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	51, // 30: dozeplugin.v1.AttributesResponse.attrs:type_name -> dozeplugin.v1.AttributesResponse.AttrsEntry
+	7,  // 31: dozeplugin.v1.EnvRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 32: dozeplugin.v1.EnvRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	52, // 33: dozeplugin.v1.EnvResponse.env:type_name -> dozeplugin.v1.EnvResponse.EnvEntry
+	7,  // 34: dozeplugin.v1.BackendURLRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 35: dozeplugin.v1.SupervisedRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 36: dozeplugin.v1.HookRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 37: dozeplugin.v1.HealthRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 38: dozeplugin.v1.RestartPolicyRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 39: dozeplugin.v1.AddrRequest.instance:type_name -> dozeplugin.v1.Instance
+	6,  // 40: dozeplugin.v1.Instance.DepsEntry.value:type_name -> dozeplugin.v1.Dep
+	0,  // 41: dozeplugin.v1.Engine.Type:input_type -> dozeplugin.v1.Empty
+	0,  // 42: dozeplugin.v1.Engine.Capabilities:input_type -> dozeplugin.v1.Empty
+	15, // 43: dozeplugin.v1.Engine.DecodeConfig:input_type -> dozeplugin.v1.DecodeRequest
+	17, // 44: dozeplugin.v1.Engine.Resolve:input_type -> dozeplugin.v1.ResolveRequest
+	19, // 45: dozeplugin.v1.Engine.Provision:input_type -> dozeplugin.v1.ProvisionRequest
+	20, // 46: dozeplugin.v1.Engine.Provisioned:input_type -> dozeplugin.v1.ProvisionedRequest
+	22, // 47: dozeplugin.v1.Engine.BackendSocket:input_type -> dozeplugin.v1.BackendSocketRequest
+	24, // 48: dozeplugin.v1.Engine.ConnString:input_type -> dozeplugin.v1.ConnStringRequest
+	26, // 49: dozeplugin.v1.Engine.Plan:input_type -> dozeplugin.v1.PlanRequest
+	30, // 50: dozeplugin.v1.Engine.Converge:input_type -> dozeplugin.v1.ConvergeRequest
+	31, // 51: dozeplugin.v1.Engine.Objects:input_type -> dozeplugin.v1.ObjectsRequest
+	33, // 52: dozeplugin.v1.Engine.Prune:input_type -> dozeplugin.v1.PruneRequest
+	34, // 53: dozeplugin.v1.Engine.Attributes:input_type -> dozeplugin.v1.AttributesRequest
+	36, // 54: dozeplugin.v1.Engine.Env:input_type -> dozeplugin.v1.EnvRequest
+	38, // 55: dozeplugin.v1.Engine.BackendURL:input_type -> dozeplugin.v1.BackendURLRequest
+	40, // 56: dozeplugin.v1.Engine.Supervised:input_type -> dozeplugin.v1.SupervisedRequest
+	42, // 57: dozeplugin.v1.Engine.Hook:input_type -> dozeplugin.v1.HookRequest
+	43, // 58: dozeplugin.v1.Engine.CheckHealth:input_type -> dozeplugin.v1.HealthRequest
+	44, // 59: dozeplugin.v1.Engine.RestartPolicy:input_type -> dozeplugin.v1.RestartPolicyRequest
+	45, // 60: dozeplugin.v1.Engine.AdvertisedAddr:input_type -> dozeplugin.v1.AddrRequest
+	27, // 61: dozeplugin.v1.Engine.EnsureTemplate:input_type -> dozeplugin.v1.EnsureTemplateRequest
+	28, // 62: dozeplugin.v1.Engine.CloneTemplate:input_type -> dozeplugin.v1.CloneTemplateRequest
+	0,  // 63: dozeplugin.v1.Engine.WireAddr:input_type -> dozeplugin.v1.Empty
+	13, // 64: dozeplugin.v1.Engine.Type:output_type -> dozeplugin.v1.TypeResponse
+	14, // 65: dozeplugin.v1.Engine.Capabilities:output_type -> dozeplugin.v1.CapabilitiesResponse
+	16, // 66: dozeplugin.v1.Engine.DecodeConfig:output_type -> dozeplugin.v1.DecodeResponse
+	18, // 67: dozeplugin.v1.Engine.Resolve:output_type -> dozeplugin.v1.ResolveResponse
+	0,  // 68: dozeplugin.v1.Engine.Provision:output_type -> dozeplugin.v1.Empty
+	21, // 69: dozeplugin.v1.Engine.Provisioned:output_type -> dozeplugin.v1.ProvisionedResponse
+	23, // 70: dozeplugin.v1.Engine.BackendSocket:output_type -> dozeplugin.v1.BackendSocketResponse
+	25, // 71: dozeplugin.v1.Engine.ConnString:output_type -> dozeplugin.v1.ConnStringResponse
+	10, // 72: dozeplugin.v1.Engine.Plan:output_type -> dozeplugin.v1.SpawnPlan
+	0,  // 73: dozeplugin.v1.Engine.Converge:output_type -> dozeplugin.v1.Empty
+	32, // 74: dozeplugin.v1.Engine.Objects:output_type -> dozeplugin.v1.ObjectsResponse
+	0,  // 75: dozeplugin.v1.Engine.Prune:output_type -> dozeplugin.v1.Empty
+	35, // 76: dozeplugin.v1.Engine.Attributes:output_type -> dozeplugin.v1.AttributesResponse
+	37, // 77: dozeplugin.v1.Engine.Env:output_type -> dozeplugin.v1.EnvResponse
+	39, // 78: dozeplugin.v1.Engine.BackendURL:output_type -> dozeplugin.v1.BackendURLResponse
+	41, // 79: dozeplugin.v1.Engine.Supervised:output_type -> dozeplugin.v1.SupervisedResponse
+	0,  // 80: dozeplugin.v1.Engine.Hook:output_type -> dozeplugin.v1.Empty
+	0,  // 81: dozeplugin.v1.Engine.CheckHealth:output_type -> dozeplugin.v1.Empty
+	11, // 82: dozeplugin.v1.Engine.RestartPolicy:output_type -> dozeplugin.v1.RestartSpec
+	46, // 83: dozeplugin.v1.Engine.AdvertisedAddr:output_type -> dozeplugin.v1.AddrResponse
+	0,  // 84: dozeplugin.v1.Engine.EnsureTemplate:output_type -> dozeplugin.v1.Empty
+	0,  // 85: dozeplugin.v1.Engine.CloneTemplate:output_type -> dozeplugin.v1.Empty
+	29, // 86: dozeplugin.v1.Engine.WireAddr:output_type -> dozeplugin.v1.WireAddrResponse
+	64, // [64:87] is the sub-list for method output_type
+	41, // [41:64] is the sub-list for method input_type
+	41, // [41:41] is the sub-list for extension type_name
+	41, // [41:41] is the sub-list for extension extendee
+	0,  // [0:41] is the sub-list for field type_name
 }
 
 func init() { file_plugin_proto_engine_proto_init() }
@@ -2995,7 +2980,7 @@ func file_plugin_proto_engine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plugin_proto_engine_proto_rawDesc), len(file_plugin_proto_engine_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   54,
+			NumMessages:   53,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -125,11 +125,6 @@ type Instance struct {
 	Endpoint  Endpoint       // doze-owned client-facing endpoint(s)
 	Spec      EngineConfig   // engine-specific config (decoded by the driver)
 	Deps      map[string]Dep // resolved dependencies, keyed by instance name
-	// InjectedEnv is the doze-managed environment a supervised process should run
-	// with (the same set `doze run` injects: connection strings + AWS creds/region
-	// + DOZE_<NAME>_URL). The runtime populates it before Spawn; non-process drivers
-	// ignore it.
-	InjectedEnv map[string]string
 }
 
 // Condition is how "ready" a dependency must be before its dependent boots.
