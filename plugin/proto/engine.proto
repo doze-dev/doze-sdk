@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package dozeplugin.v1;
+
+option go_package = "github.com/nerdmenot/doze-sdk/plugin/proto;proto";
+
+// Engine is the contract every doze engine module implements as an out-of-process
+// gRPC plugin (HashiCorp go-plugin). It is the wire serialization of the in-tree
+// engine.Driver + capability interfaces: the plugin does the control-plane work and
+// returns a SpawnPlan describing how to run; doze core owns supervision and the
+// proxy. Optional capabilities are gated by Capabilities() so the host only calls
+// what a plugin advertises.
+service Engine {
+  // Required.
+  rpc Type(Empty) returns (TypeResponse);
+  rpc Capabilities(Empty) returns (CapabilitiesResponse);
+  rpc DecodeConfig(DecodeRequest) returns (DecodeResponse);
+  rpc Resolve(ResolveRequest) returns (ResolveResponse);
+  rpc Provision(ProvisionRequest) returns (Empty);
+  rpc Provisioned(ProvisionedRequest) returns (ProvisionedResponse);
+  rpc BackendSocket(BackendSocketRequest) returns (BackendSocketResponse);
+  rpc ConnString(ConnStringRequest) returns (ConnStringResponse);
+  rpc Plan(PlanRequest) returns (SpawnPlan);
+
+  // Optional capabilities (advertised via Capabilities()).
+  rpc Converge(ConvergeRequest) returns (Empty);            // CAP_CONVERGER
+  rpc Objects(ObjectsRequest) returns (ObjectsResponse);    // CAP_INVENTORY
+  rpc Prune(PruneRequest) returns (Empty);                  // CAP_PRUNER
+  rpc Attributes(AttributesRequest) returns (AttributesResponse); // CAP_ATTRIBUTER
+  rpc Env(EnvRequest) returns (EnvResponse);                // CAP_ENV
+  rpc BackendURL(BackendURLRequest) returns (BackendURLResponse); // CAP_BACKEND
+  rpc Supervised(SupervisedRequest) returns (SupervisedResponse); // CAP_LIFECYCLE
+  rpc Hook(HookRequest) returns (Empty);                    // CAP_HOOKED
+  rpc CheckHealth(HealthRequest) returns (Empty);           // CAP_HEALTH
+  rpc RestartPolicy(RestartPolicyRequest) returns (RestartSpec); // CAP_RESTARTABLE
+  rpc AdvertisedAddr(AddrRequest) returns (AddrResponse);   // CAP_PORTBINDER
+  rpc EnsureTemplate(EnsureTemplateRequest) returns (Empty); // CAP_TEMPLATER
+  rpc CloneTemplate(CloneTemplateRequest) returns (Empty);   // CAP_TEMPLATER
+  rpc WireAddr(Empty) returns (WireAddrResponse);            // CAP_WIRE_FILTER
+}
+
+message Empty {}
+
+// ── value types (mirror internal/engine) ─────────────────────────────────────
+message Platform { string os = 1; string arch = 2; string triple = 3; }
+message Toolchain { string engine = 1; string full = 2; string bin_dir = 3; map<string, string> tools = 4; }
+message Pin { string resolved = 1; string source = 2; map<string, string> hashes = 3; }
+// LockEntry is one (engine, spec) -> pin row of the lockfile. Resolve round-trips
+// a whole set of these so a composite engine's component pins (e.g. documentdb +
+// ferretdb) each land under their own key instead of collapsing to one.
+message LockEntry { string engine = 1; string spec = 2; Pin pin = 3; }
+message Endpoint { string unix_socket = 1; string tcp_addr = 2; string backend = 3; }
+message Dep { string name = 1; string engine = 2; string socket_dir = 3; string backend = 4; string url = 5; }
+
+message Instance {
+  string name = 1;
+  string type = 2;
+  string version = 3;
+  string data_dir = 4;
+  string socket_dir = 5;
+  int32 port = 6;
+  Endpoint endpoint = 7;
+  bytes spec = 8; // the plugin's own serialized config (opaque to core)
+  map<string, Dep> deps = 9;
+  map<string, string> injected_env = 10;
+}
+
+message Ready {
+  string kind = 1; // http | tcp | exec | log_line | socket
+  string target = 2;
+  int64 interval_ns = 3;
+  int64 timeout_ns = 4;
+  int32 retries = 5;
+}
+
+message SpawnSpec {
+  string name = 1;
+  string dir = 2;
+  string bin = 3;
+  repeated string args = 4;
+  repeated string env = 5;
+  bool tree = 6;
+  repeated string after = 7;
+  Ready ready = 8;
+  repeated string hooks = 9;
+}
+
+message SpawnPlan { repeated SpawnSpec specs = 1; }
+message RestartSpec { string policy = 1; int64 backoff_ns = 2; int32 max_retries = 3; }
+message Object { string kind = 1; string name = 2; string hash = 3; }
+
+// ── requests / responses ─────────────────────────────────────────────────────
+message TypeResponse { string type = 1; }
+message CapabilitiesResponse { repeated string capabilities = 1; }
+
+message DecodeRequest {
+  bytes file = 1;                       // the full source file declaring the block
+  string block_type = 2;                // engine type (block keyword)
+  string block_label = 3;               // instance name (block label)
+  map<string, bytes> variables = 4;     // eval-context vars, each ctyjson-encoded
+  string base_dir = 5;
+}
+message DecodeResponse { bytes spec = 1; } // the plugin's gob-encoded config
+
+message ResolveRequest { string spec = 1; Platform platform = 2; repeated LockEntry locked = 3; }
+message ResolveResponse { Toolchain toolchain = 1; repeated LockEntry recorded = 2; }
+
+message ProvisionRequest { Instance instance = 1; Toolchain toolchain = 2; }
+message ProvisionedRequest { string data_dir = 1; }
+message ProvisionedResponse { bool provisioned = 1; }
+
+message BackendSocketRequest { string socket_dir = 1; int32 port = 2; }
+message BackendSocketResponse { string path = 1; }
+
+message ConnStringRequest { Instance instance = 1; Endpoint endpoint = 2; }
+message ConnStringResponse { string env_var = 1; string url = 2; }
+
+message PlanRequest { Instance instance = 1; Toolchain toolchain = 2; }
+message EnsureTemplateRequest { Toolchain toolchain = 1; string template_dir = 2; }
+message CloneTemplateRequest { string template_dir = 1; string dest_dir = 2; }
+// WireAddrResponse reports the unix socket the plugin listens on for client-fd
+// handoff (SCM_RIGHTS). Empty path means the plugin runs no wire filter.
+message WireAddrResponse { string path = 1; }
+
+message ConvergeRequest { Instance instance = 1; Toolchain toolchain = 2; Endpoint endpoint = 3; }
+message ObjectsRequest { Instance instance = 1; }
+message ObjectsResponse { repeated Object objects = 1; }
+message PruneRequest { Instance instance = 1; Toolchain toolchain = 2; Endpoint endpoint = 3; repeated Object removed = 4; }
+
+message AttributesRequest { Instance instance = 1; Endpoint endpoint = 2; }
+message AttributesResponse { map<string, bytes> attrs = 1; } // attr name -> cty-json value
+
+message EnvRequest { Instance instance = 1; Endpoint endpoint = 2; }
+message EnvResponse { map<string, string> env = 1; }
+
+message BackendURLRequest { Instance instance = 1; }
+message BackendURLResponse { string url = 1; }
+
+message SupervisedRequest { Instance instance = 1; }
+message SupervisedResponse { bool supervised = 1; }
+
+message HookRequest { Instance instance = 1; string phase = 2; } // pre_start | post_start | pre_stop
+message HealthRequest { Instance instance = 1; }
+message RestartPolicyRequest { Instance instance = 1; }
+
+message AddrRequest { Instance instance = 1; }
+message AddrResponse { string addr = 1; bool ok = 2; }
