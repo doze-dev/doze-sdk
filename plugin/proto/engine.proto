@@ -27,7 +27,6 @@ service Engine {
   rpc Objects(ObjectsRequest) returns (ObjectsResponse);    // CAP_INVENTORY
   rpc Prune(PruneRequest) returns (Empty);                  // CAP_PRUNER
   rpc Attributes(AttributesRequest) returns (AttributesResponse); // CAP_ATTRIBUTER
-  rpc Env(EnvRequest) returns (EnvResponse);                // CAP_ENV
   rpc BackendURL(BackendURLRequest) returns (BackendURLResponse); // CAP_BACKEND
   rpc Supervised(SupervisedRequest) returns (SupervisedResponse); // CAP_LIFECYCLE
   rpc Hook(HookRequest) returns (Empty);                    // CAP_HOOKED
@@ -129,8 +128,6 @@ message PruneRequest { Instance instance = 1; Toolchain toolchain = 2; Endpoint 
 message AttributesRequest { Instance instance = 1; Endpoint endpoint = 2; }
 message AttributesResponse { map<string, bytes> attrs = 1; } // attr name -> cty-json value
 
-message EnvRequest { Instance instance = 1; Endpoint endpoint = 2; }
-message EnvResponse { map<string, string> env = 1; }
 
 message BackendURLRequest { Instance instance = 1; }
 message BackendURLResponse { string url = 1; }

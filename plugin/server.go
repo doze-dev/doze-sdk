@@ -58,7 +58,6 @@ const (
 	capInventory   = "inventory"
 	capPruner      = "pruner"
 	capAttributer  = "attributer"
-	capEnv         = "env"
 	capBackendURL  = "backend_url"
 	capLifecycle   = "lifecycle"
 	capHooked      = "hooked"
@@ -86,8 +85,6 @@ func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.Capab
 	add(pr, capPruner)
 	_, at := s.drv.(engine.Attributer)
 	add(at, capAttributer)
-	_, en := s.drv.(engine.EnvProvider)
-	add(en, capEnv)
 	_, bu := s.drv.(engine.BackendProvider)
 	add(bu, capBackendURL)
 	_, lc := s.drv.(engine.Lifecycle)
@@ -284,18 +281,6 @@ func (s *engineServer) Prune(ctx context.Context, req *proto.PruneRequest) (*pro
 		return nil, err
 	}
 	return &proto.Empty{}, pr.Prune(ctx, inst, toolchainFromProto(req.Toolchain), endpointFromProto(req.Endpoint), objectsFromProto(req.Removed))
-}
-
-func (s *engineServer) Env(_ context.Context, req *proto.EnvRequest) (*proto.EnvResponse, error) {
-	ep, ok := s.drv.(engine.EnvProvider)
-	if !ok {
-		return nil, status.Error(codes.Unimplemented, "not an EnvProvider")
-	}
-	inst, err := instanceFromProto(req.Instance)
-	if err != nil {
-		return nil, err
-	}
-	return &proto.EnvResponse{Env: ep.Env(inst, endpointFromProto(req.Endpoint))}, nil
 }
 
 func (s *engineServer) BackendURL(_ context.Context, req *proto.BackendURLRequest) (*proto.BackendURLResponse, error) {

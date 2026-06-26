@@ -247,21 +247,6 @@ func (d *pluginDriver) Prune(ctx context.Context, inst engine.Instance, tc engin
 	return err
 }
 
-func (d *pluginDriver) Env(inst engine.Instance, ep engine.Endpoint) map[string]string {
-	if !d.has(capEnv) {
-		return nil
-	}
-	pi, err := instanceToProto(inst)
-	if err != nil {
-		return nil
-	}
-	resp, err := d.client.Env(context.Background(), &proto.EnvRequest{Instance: pi, Endpoint: endpointToProto(ep)})
-	if err != nil {
-		return nil
-	}
-	return resp.Env
-}
-
 func (d *pluginDriver) BackendURL(inst engine.Instance) string {
 	if !d.has(capBackendURL) {
 		return ""

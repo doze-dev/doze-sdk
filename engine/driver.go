@@ -45,9 +45,11 @@ type Driver interface {
 	// backend, given its socket directory and nominal port.
 	BackendSocket(socketDir string, port int) string
 
-	// ConnString builds the connection URL doze injects for a child process,
-	// pointed at the doze-owned endpoint. envVar is the variable name family
-	// (DATABASE_URL, REDIS_URL, MONGODB_URI).
+	// ConnString builds the connection URL doze surfaces for an instance —
+	// reported by `doze output` and resolvable as its <type>.<name>.url attribute —
+	// pointed at the doze-owned endpoint. envVar is the conventional variable name
+	// (DATABASE_URL, REDIS_URL, MONGODB_URI). doze does not inject it anywhere;
+	// users reference it explicitly.
 	ConnString(inst Instance, ep Endpoint) (envVar, url string)
 
 	// A driver must also describe how to run: either Spawner (a declarative
@@ -200,15 +202,6 @@ type Attributer interface {
 // this instance's backend over its unix socket (not via the doze proxy).
 type BackendProvider interface {
 	BackendURL(inst Instance) string
-}
-
-// EnvProvider is implemented by engines that inject more than the single
-// ConnString pair into a child's environment — e.g. the AWS services need an
-// endpoint URL plus dummy credentials and a region. The returned variables are
-// merged into the environment doze exports for `doze run`/`doze env`, in
-// addition to whatever ConnString contributes.
-type EnvProvider interface {
-	Env(inst Instance, ep Endpoint) map[string]string
 }
 
 // Versionless is implemented by engines that ship inside the doze binary and

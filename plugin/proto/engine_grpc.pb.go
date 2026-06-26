@@ -32,7 +32,6 @@ const (
 	Engine_Objects_FullMethodName        = "/dozeplugin.v1.Engine/Objects"
 	Engine_Prune_FullMethodName          = "/dozeplugin.v1.Engine/Prune"
 	Engine_Attributes_FullMethodName     = "/dozeplugin.v1.Engine/Attributes"
-	Engine_Env_FullMethodName            = "/dozeplugin.v1.Engine/Env"
 	Engine_BackendURL_FullMethodName     = "/dozeplugin.v1.Engine/BackendURL"
 	Engine_Supervised_FullMethodName     = "/dozeplugin.v1.Engine/Supervised"
 	Engine_Hook_FullMethodName           = "/dozeplugin.v1.Engine/Hook"
@@ -70,7 +69,6 @@ type EngineClient interface {
 	Objects(ctx context.Context, in *ObjectsRequest, opts ...grpc.CallOption) (*ObjectsResponse, error)
 	Prune(ctx context.Context, in *PruneRequest, opts ...grpc.CallOption) (*Empty, error)
 	Attributes(ctx context.Context, in *AttributesRequest, opts ...grpc.CallOption) (*AttributesResponse, error)
-	Env(ctx context.Context, in *EnvRequest, opts ...grpc.CallOption) (*EnvResponse, error)
 	BackendURL(ctx context.Context, in *BackendURLRequest, opts ...grpc.CallOption) (*BackendURLResponse, error)
 	Supervised(ctx context.Context, in *SupervisedRequest, opts ...grpc.CallOption) (*SupervisedResponse, error)
 	Hook(ctx context.Context, in *HookRequest, opts ...grpc.CallOption) (*Empty, error)
@@ -220,16 +218,6 @@ func (c *engineClient) Attributes(ctx context.Context, in *AttributesRequest, op
 	return out, nil
 }
 
-func (c *engineClient) Env(ctx context.Context, in *EnvRequest, opts ...grpc.CallOption) (*EnvResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(EnvResponse)
-	err := c.cc.Invoke(ctx, Engine_Env_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *engineClient) BackendURL(ctx context.Context, in *BackendURLRequest, opts ...grpc.CallOption) (*BackendURLResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(BackendURLResponse)
@@ -346,7 +334,6 @@ type EngineServer interface {
 	Objects(context.Context, *ObjectsRequest) (*ObjectsResponse, error)
 	Prune(context.Context, *PruneRequest) (*Empty, error)
 	Attributes(context.Context, *AttributesRequest) (*AttributesResponse, error)
-	Env(context.Context, *EnvRequest) (*EnvResponse, error)
 	BackendURL(context.Context, *BackendURLRequest) (*BackendURLResponse, error)
 	Supervised(context.Context, *SupervisedRequest) (*SupervisedResponse, error)
 	Hook(context.Context, *HookRequest) (*Empty, error)
@@ -404,9 +391,6 @@ func (UnimplementedEngineServer) Prune(context.Context, *PruneRequest) (*Empty, 
 }
 func (UnimplementedEngineServer) Attributes(context.Context, *AttributesRequest) (*AttributesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Attributes not implemented")
-}
-func (UnimplementedEngineServer) Env(context.Context, *EnvRequest) (*EnvResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Env not implemented")
 }
 func (UnimplementedEngineServer) BackendURL(context.Context, *BackendURLRequest) (*BackendURLResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BackendURL not implemented")
@@ -690,24 +674,6 @@ func _Engine_Attributes_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Engine_Env_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EnvRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EngineServer).Env(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Engine_Env_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EngineServer).Env(ctx, req.(*EnvRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Engine_BackendURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BackendURLRequest)
 	if err := dec(in); err != nil {
@@ -928,10 +894,6 @@ var Engine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Attributes",
 			Handler:    _Engine_Attributes_Handler,
-		},
-		{
-			MethodName: "Env",
-			Handler:    _Engine_Env_Handler,
 		},
 		{
 			MethodName: "BackendURL",
