@@ -112,7 +112,7 @@ func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.Capab
 // meta-args (count/for_each/depends_on) and the common fields (version/listen). The
 // engine-specific remainder is what the driver decodes — identical to in-tree.
 var stripSchema = &hcl.BodySchema{Attributes: []hcl.AttributeSchema{
-	{Name: "count"}, {Name: "for_each"}, {Name: "depends_on"},
+	{Name: "count"}, {Name: "for_each"}, {Name: "depends_on"}, {Name: "enabled"},
 	{Name: "version"}, {Name: "listen"},
 }}
 
