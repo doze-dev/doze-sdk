@@ -109,11 +109,12 @@ func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.Capab
 }
 
 // stripSchema removes the fields core consumes before an engine sees its body: the
-// meta-args (count/for_each/depends_on) and the common fields (version/listen). The
-// engine-specific remainder is what the driver decodes — identical to in-tree.
+// meta-args (count/for_each/depends_on/enabled) and the common fields
+// (version/listen/port). The engine-specific remainder is what the driver decodes —
+// identical to in-tree.
 var stripSchema = &hcl.BodySchema{Attributes: []hcl.AttributeSchema{
 	{Name: "count"}, {Name: "for_each"}, {Name: "depends_on"}, {Name: "enabled"},
-	{Name: "version"}, {Name: "listen"},
+	{Name: "version"}, {Name: "listen"}, {Name: "port"},
 }}
 
 // DecodeConfig re-parses the source file the plugin's block came from, isolates the
