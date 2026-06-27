@@ -82,10 +82,9 @@ func targetTriple(goos, goarch string) (string, error) {
 		}
 	case "darwin":
 		switch goarch {
-		case "amd64":
-			return "x86_64-apple-darwin", nil
 		case "arm64":
 			return "aarch64-apple-darwin", nil
+			// Intel Mac (darwin/amd64) is intentionally unsupported — Apple Silicon only.
 		}
 	}
 	return "", fmt.Errorf("unsupported platform %s/%s", goos, goarch)
