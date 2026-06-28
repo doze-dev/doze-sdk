@@ -41,6 +41,9 @@ const (
 	Engine_EnsureTemplate_FullMethodName = "/dozeplugin.v1.Engine/EnsureTemplate"
 	Engine_CloneTemplate_FullMethodName  = "/dozeplugin.v1.Engine/CloneTemplate"
 	Engine_WireAddr_FullMethodName       = "/dozeplugin.v1.Engine/WireAddr"
+	Engine_Actions_FullMethodName        = "/dozeplugin.v1.Engine/Actions"
+	Engine_Resources_FullMethodName      = "/dozeplugin.v1.Engine/Resources"
+	Engine_RunAction_FullMethodName      = "/dozeplugin.v1.Engine/RunAction"
 )
 
 // EngineClient is the client API for Engine service.
@@ -78,6 +81,9 @@ type EngineClient interface {
 	EnsureTemplate(ctx context.Context, in *EnsureTemplateRequest, opts ...grpc.CallOption) (*Empty, error)
 	CloneTemplate(ctx context.Context, in *CloneTemplateRequest, opts ...grpc.CallOption) (*Empty, error)
 	WireAddr(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*WireAddrResponse, error)
+	Actions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionsResponse, error)
+	Resources(ctx context.Context, in *ResourcesRequest, opts ...grpc.CallOption) (*ResourcesResponse, error)
+	RunAction(ctx context.Context, in *RunActionRequest, opts ...grpc.CallOption) (*RunActionResponse, error)
 }
 
 type engineClient struct {
@@ -308,6 +314,36 @@ func (c *engineClient) WireAddr(ctx context.Context, in *Empty, opts ...grpc.Cal
 	return out, nil
 }
 
+func (c *engineClient) Actions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ActionsResponse)
+	err := c.cc.Invoke(ctx, Engine_Actions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *engineClient) Resources(ctx context.Context, in *ResourcesRequest, opts ...grpc.CallOption) (*ResourcesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResourcesResponse)
+	err := c.cc.Invoke(ctx, Engine_Resources_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *engineClient) RunAction(ctx context.Context, in *RunActionRequest, opts ...grpc.CallOption) (*RunActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RunActionResponse)
+	err := c.cc.Invoke(ctx, Engine_RunAction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EngineServer is the server API for Engine service.
 // All implementations must embed UnimplementedEngineServer
 // for forward compatibility.
@@ -343,6 +379,9 @@ type EngineServer interface {
 	EnsureTemplate(context.Context, *EnsureTemplateRequest) (*Empty, error)
 	CloneTemplate(context.Context, *CloneTemplateRequest) (*Empty, error)
 	WireAddr(context.Context, *Empty) (*WireAddrResponse, error)
+	Actions(context.Context, *Empty) (*ActionsResponse, error)
+	Resources(context.Context, *ResourcesRequest) (*ResourcesResponse, error)
+	RunAction(context.Context, *RunActionRequest) (*RunActionResponse, error)
 	mustEmbedUnimplementedEngineServer()
 }
 
@@ -418,6 +457,15 @@ func (UnimplementedEngineServer) CloneTemplate(context.Context, *CloneTemplateRe
 }
 func (UnimplementedEngineServer) WireAddr(context.Context, *Empty) (*WireAddrResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method WireAddr not implemented")
+}
+func (UnimplementedEngineServer) Actions(context.Context, *Empty) (*ActionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Actions not implemented")
+}
+func (UnimplementedEngineServer) Resources(context.Context, *ResourcesRequest) (*ResourcesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Resources not implemented")
+}
+func (UnimplementedEngineServer) RunAction(context.Context, *RunActionRequest) (*RunActionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RunAction not implemented")
 }
 func (UnimplementedEngineServer) mustEmbedUnimplementedEngineServer() {}
 func (UnimplementedEngineServer) testEmbeddedByValue()                {}
@@ -836,6 +884,60 @@ func _Engine_WireAddr_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Engine_Actions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EngineServer).Actions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Engine_Actions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EngineServer).Actions(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Engine_Resources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourcesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EngineServer).Resources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Engine_Resources_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EngineServer).Resources(ctx, req.(*ResourcesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Engine_RunAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RunActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EngineServer).RunAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Engine_RunAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EngineServer).RunAction(ctx, req.(*RunActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Engine_ServiceDesc is the grpc.ServiceDesc for Engine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -930,6 +1032,18 @@ var Engine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WireAddr",
 			Handler:    _Engine_WireAddr_Handler,
+		},
+		{
+			MethodName: "Actions",
+			Handler:    _Engine_Actions_Handler,
+		},
+		{
+			MethodName: "Resources",
+			Handler:    _Engine_Resources_Handler,
+		},
+		{
+			MethodName: "RunAction",
+			Handler:    _Engine_RunAction_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

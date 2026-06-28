@@ -68,6 +68,7 @@ const (
 	capVersionless = "versionless"
 	capTemplater   = "templater"
 	capProxyFilter = "proxy_filter"
+	capAdmin       = "admin"
 )
 
 func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.CapabilitiesResponse, error) {
@@ -105,7 +106,51 @@ func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.Capab
 	add(tm, capTemplater)
 	_, pf := s.drv.(engine.ProxyFilter)
 	add(pf, capProxyFilter)
+	_, ad := s.drv.(engine.Admin)
+	add(ad, capAdmin)
 	return &proto.CapabilitiesResponse{Capabilities: caps}, nil
+}
+
+// ── CAP_ADMIN handlers ───────────────────────────────────────────────────────
+
+func (s *engineServer) Actions(context.Context, *proto.Empty) (*proto.ActionsResponse, error) {
+	a, ok := s.drv.(engine.Admin)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "not an Admin")
+	}
+	return &proto.ActionsResponse{Actions: actionsToProto(a.Actions())}, nil
+}
+
+func (s *engineServer) Resources(ctx context.Context, req *proto.ResourcesRequest) (*proto.ResourcesResponse, error) {
+	a, ok := s.drv.(engine.Admin)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "not an Admin")
+	}
+	inst, err := instanceFromProto(req.Instance)
+	if err != nil {
+		return nil, err
+	}
+	res, err := a.Resources(ctx, inst, endpointFromProto(req.Endpoint))
+	if err != nil {
+		return nil, err
+	}
+	return &proto.ResourcesResponse{Resources: resourcesToProto(res)}, nil
+}
+
+func (s *engineServer) RunAction(ctx context.Context, req *proto.RunActionRequest) (*proto.RunActionResponse, error) {
+	a, ok := s.drv.(engine.Admin)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "not an Admin")
+	}
+	inst, err := instanceFromProto(req.Instance)
+	if err != nil {
+		return nil, err
+	}
+	out, err := a.Run(ctx, inst, endpointFromProto(req.Endpoint), req.Action, req.Resource, req.Input)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.RunActionResponse{Result: out}, nil
 }
 
 // stripSchema removes the fields core consumes before an engine sees its body: the

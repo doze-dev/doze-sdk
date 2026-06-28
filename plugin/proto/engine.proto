@@ -36,6 +36,9 @@ service Engine {
   rpc EnsureTemplate(EnsureTemplateRequest) returns (Empty); // CAP_TEMPLATER
   rpc CloneTemplate(CloneTemplateRequest) returns (Empty);   // CAP_TEMPLATER
   rpc WireAddr(Empty) returns (WireAddrResponse);            // CAP_WIRE_FILTER
+  rpc Actions(Empty) returns (ActionsResponse);                 // CAP_ADMIN
+  rpc Resources(ResourcesRequest) returns (ResourcesResponse);  // CAP_ADMIN
+  rpc RunAction(RunActionRequest) returns (RunActionResponse);  // CAP_ADMIN
 }
 
 message Empty {}
@@ -141,3 +144,12 @@ message RestartPolicyRequest { Instance instance = 1; }
 
 message AddrRequest { Instance instance = 1; }
 message AddrResponse { string addr = 1; bool ok = 2; }
+
+// ── CAP_ADMIN: builtin data operations (s3/sqs/sns management) ────────────────
+message Resource { string kind = 1; string name = 2; string status = 3; map<string, string> info = 4; }
+message Action { string id = 1; string label = 2; string kind = 3; bool destructive = 4; string input_hint = 5; }
+message ActionsResponse { repeated Action actions = 1; }
+message ResourcesRequest { Instance instance = 1; Endpoint endpoint = 2; }
+message ResourcesResponse { repeated Resource resources = 1; }
+message RunActionRequest { Instance instance = 1; Endpoint endpoint = 2; string action = 3; string resource = 4; string input = 5; }
+message RunActionResponse { string result = 1; }

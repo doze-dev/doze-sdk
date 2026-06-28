@@ -203,6 +203,36 @@ func objectsFromProto(ps []*proto.Object) []engine.Object {
 func restartToProto(r engine.RestartSpec) *proto.RestartSpec {
 	return &proto.RestartSpec{Policy: string(r.Policy), BackoffNs: int64(r.Backoff), MaxRetries: int32(r.MaxRetries)}
 }
+
+func actionsToProto(as []engine.Action) []*proto.Action {
+	var out []*proto.Action
+	for _, a := range as {
+		out = append(out, &proto.Action{Id: a.ID, Label: a.Label, Kind: a.Kind, Destructive: a.Destructive, InputHint: a.InputHint})
+	}
+	return out
+}
+func actionsFromProto(ps []*proto.Action) []engine.Action {
+	var out []engine.Action
+	for _, p := range ps {
+		out = append(out, engine.Action{ID: p.Id, Label: p.Label, Kind: p.Kind, Destructive: p.Destructive, InputHint: p.InputHint})
+	}
+	return out
+}
+func resourcesToProto(rs []engine.Resource) []*proto.Resource {
+	var out []*proto.Resource
+	for _, r := range rs {
+		out = append(out, &proto.Resource{Kind: r.Kind, Name: r.Name, Status: r.Status, Info: r.Info})
+	}
+	return out
+}
+func resourcesFromProto(ps []*proto.Resource) []engine.Resource {
+	var out []engine.Resource
+	for _, p := range ps {
+		out = append(out, engine.Resource{Kind: p.Kind, Name: p.Name, Status: p.Status, Info: p.Info})
+	}
+	return out
+}
+
 func restartFromProto(r *proto.RestartSpec) engine.RestartSpec {
 	if r == nil {
 		return engine.RestartSpec{Policy: engine.RestartNo}

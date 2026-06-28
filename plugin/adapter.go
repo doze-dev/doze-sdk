@@ -48,16 +48,63 @@ func newPluginDriver(c proto.EngineClient) engine.Driver {
 	// driver — every plugin would falsely claim them. Wrap to add exactly the ones
 	// advertised. The wrappers embed *pluginDriver (concrete) so all other
 	// capability assertions still resolve.
+	// These three capabilities are discovered by interface *presence* (the runtime
+	// type-asserts for them), so they can't be no-op methods on the base driver —
+	// every plugin would falsely claim them. Wrap to add exactly the advertised set.
+	// The builtins (s3/sqs/sns) are versionless AND admin, so the combinations are
+	// real; compose them by embedding so each wrapper's method set is the union.
+	v, t, a := d.caps[capVersionless], d.caps[capTemplater], d.caps[capAdmin]
 	switch {
-	case d.caps[capVersionless] && d.caps[capTemplater]:
+	case v && t && a:
+		return versionlessTemplaterAdminDriver{templaterAdminDriver{adminDriver{d}}}
+	case v && t:
 		return versionlessTemplaterDriver{d}
-	case d.caps[capVersionless]:
+	case v && a:
+		return versionlessAdminDriver{adminDriver{d}}
+	case t && a:
+		return templaterAdminDriver{adminDriver{d}}
+	case v:
 		return versionlessDriver{d}
-	case d.caps[capTemplater]:
+	case t:
 		return templaterDriver{d}
+	case a:
+		return adminDriver{d}
 	}
 	return d
 }
+
+// adminDriver adds engine.Admin to a plugin driver that advertised it, so the
+// runtime's type-assertion (drv.(engine.Admin)) only succeeds for engines that
+// actually expose data operations.
+type adminDriver struct{ *pluginDriver }
+
+func (a adminDriver) Actions() []engine.Action { return a.pluginDriver.actions() }
+func (a adminDriver) Resources(ctx context.Context, inst engine.Instance, ep engine.Endpoint) ([]engine.Resource, error) {
+	return a.pluginDriver.resources(ctx, inst, ep)
+}
+func (a adminDriver) Run(ctx context.Context, inst engine.Instance, ep engine.Endpoint, action, resource, input string) (string, error) {
+	return a.pluginDriver.runAction(ctx, inst, ep, action, resource, input)
+}
+
+// versionlessAdminDriver / templaterAdminDriver / versionlessTemplaterAdminDriver
+// compose admin with the other presence-capabilities by embedding, so the method
+// set is the union (the s3/sqs/sns builtins are versionless + admin).
+type versionlessAdminDriver struct{ adminDriver }
+
+func (versionlessAdminDriver) Versionless() {}
+
+type templaterAdminDriver struct{ adminDriver }
+
+func (t templaterAdminDriver) EnsureTemplate(ctx context.Context, tc engine.Toolchain, templateDir string) error {
+	return t.pluginDriver.ensureTemplate(ctx, tc, templateDir)
+}
+func (t templaterAdminDriver) CloneTemplate(ctx context.Context, templateDir, destDir string) error {
+	return t.pluginDriver.cloneTemplate(ctx, templateDir, destDir)
+}
+
+type versionlessTemplaterAdminDriver struct{ templaterAdminDriver }
+
+func (versionlessTemplaterAdminDriver) Versionless() {}
 
 // versionlessDriver adds engine.Versionless to a plugin driver that advertised it
 // (embedding keeps every other Driver/Spawner/capability method).
@@ -199,6 +246,41 @@ func (d *pluginDriver) Converge(ctx context.Context, inst engine.Instance, tc en
 	}
 	_, err = d.client.Converge(ctx, &proto.ConvergeRequest{Instance: pi, Toolchain: toolchainToProto(tc), Endpoint: endpointToProto(ep)})
 	return err
+}
+
+// actions/resources/runAction forward the engine.Admin capability over gRPC. They
+// are reached only via adminDriver, which is installed only when capAdmin was
+// advertised, so no extra capability guard is needed here.
+func (d *pluginDriver) actions() []engine.Action {
+	resp, err := d.client.Actions(context.Background(), &proto.Empty{})
+	if err != nil {
+		return nil
+	}
+	return actionsFromProto(resp.Actions)
+}
+
+func (d *pluginDriver) resources(ctx context.Context, inst engine.Instance, ep engine.Endpoint) ([]engine.Resource, error) {
+	pi, err := instanceToProto(inst)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := d.client.Resources(ctx, &proto.ResourcesRequest{Instance: pi, Endpoint: endpointToProto(ep)})
+	if err != nil {
+		return nil, err
+	}
+	return resourcesFromProto(resp.Resources), nil
+}
+
+func (d *pluginDriver) runAction(ctx context.Context, inst engine.Instance, ep engine.Endpoint, action, resource, input string) (string, error) {
+	pi, err := instanceToProto(inst)
+	if err != nil {
+		return "", err
+	}
+	resp, err := d.client.RunAction(ctx, &proto.RunActionRequest{Instance: pi, Endpoint: endpointToProto(ep), Action: action, Resource: resource, Input: input})
+	if err != nil {
+		return "", err
+	}
+	return resp.Result, nil
 }
 
 func (d *pluginDriver) Attributes(inst engine.Instance, ep engine.Endpoint) map[string]cty.Value {
