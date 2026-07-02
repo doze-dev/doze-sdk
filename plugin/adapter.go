@@ -2,13 +2,28 @@ package plugin
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/zclconf/go-cty/cty"
+	"google.golang.org/grpc/status"
 
 	"github.com/doze-dev/doze-sdk/engine"
 	"github.com/doze-dev/doze-sdk/plugin/proto"
 )
+
+// userError strips the gRPC transport framing ("rpc error: code = Unknown
+// desc = …") from an error a plugin returned, so a config-validation message
+// reads as the plugin wrote it. Non-status errors pass through unchanged.
+func userError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if s, ok := status.FromError(err); ok && s.Message() != "" {
+		return errors.New(s.Message())
+	}
+	return err
+}
 
 var _ engine.RemoteDecoder = (*pluginDriver)(nil)
 
@@ -43,34 +58,119 @@ func newPluginDriver(c proto.EngineClient) engine.Driver {
 			d.caps[cp] = true
 		}
 	}
-	// Versionless and Templater change behaviour by interface *presence* (the
-	// runtime type-asserts for them), so they can't be no-op methods on the base
-	// driver — every plugin would falsely claim them. Wrap to add exactly the ones
-	// advertised. The wrappers embed *pluginDriver (concrete) so all other
-	// capability assertions still resolve.
-	// These three capabilities are discovered by interface *presence* (the runtime
-	// type-asserts for them), so they can't be no-op methods on the base driver —
-	// every plugin would falsely claim them. Wrap to add exactly the advertised set.
-	// The builtins (s3/sqs/sns) are versionless AND admin, so the combinations are
-	// real; compose them by embedding so each wrapper's method set is the union.
+	// Versionless, Templater, Admin, and the convergence trio (Converger+Inventory+
+	// Pruner) change behaviour by interface *presence* (the runtime type-asserts for
+	// them), so they can't be no-op methods on the base driver — every plugin would
+	// falsely claim them, and a falsely-claimed Converger silently skips structure.
+	// Wrap to add exactly the advertised set. The wrappers embed *pluginDriver
+	// (concrete) so all other capability assertions (Spawner, ProxyFilter, Lifecycle,
+	// …) still resolve. The builtins (s3/sqs/sns) are versionless + admin + structural
+	// and postgres is templater + structural, so the combinations are real; compose
+	// them by embedding so each wrapper's method set is the union.
+	return wrapCaps(d)
+}
+
+// wrapCaps returns d decorated with exactly the presence-discovered capabilities it
+// advertised. The convergence trio is keyed on capConverger and added as a unit
+// (the three co-occur in every structural engine); objects/prune RPCs are guarded
+// server-side for the rare converger-only plugin.
+func wrapCaps(d *pluginDriver) engine.Driver {
 	v, t, a := d.caps[capVersionless], d.caps[capTemplater], d.caps[capAdmin]
+	s := d.caps[capConverger]
+	if !s {
+		switch {
+		case v && t && a:
+			return versionlessTemplaterAdminDriver{templaterAdminDriver{adminDriver{d}}}
+		case v && t:
+			return versionlessTemplaterDriver{d}
+		case v && a:
+			return versionlessAdminDriver{adminDriver{d}}
+		case t && a:
+			return templaterAdminDriver{adminDriver{d}}
+		case v:
+			return versionlessDriver{d}
+		case t:
+			return templaterDriver{d}
+		case a:
+			return adminDriver{d}
+		}
+		return d
+	}
+	st := structural{d}
 	switch {
 	case v && t && a:
-		return versionlessTemplaterAdminDriver{templaterAdminDriver{adminDriver{d}}}
+		return versionlessTemplaterAdminStructuralDriver{versionlessTemplaterAdminDriver{templaterAdminDriver{adminDriver{d}}}, st}
 	case v && t:
-		return versionlessTemplaterDriver{d}
+		return versionlessTemplaterStructuralDriver{versionlessTemplaterDriver{d}, st}
 	case v && a:
-		return versionlessAdminDriver{adminDriver{d}}
+		return versionlessAdminStructuralDriver{versionlessAdminDriver{adminDriver{d}}, st}
 	case t && a:
-		return templaterAdminDriver{adminDriver{d}}
+		return templaterAdminStructuralDriver{templaterAdminDriver{adminDriver{d}}, st}
 	case v:
-		return versionlessDriver{d}
+		return versionlessStructuralDriver{versionlessDriver{d}, st}
 	case t:
-		return templaterDriver{d}
+		return templaterStructuralDriver{templaterDriver{d}, st}
 	case a:
-		return adminDriver{d}
+		return adminStructuralDriver{adminDriver{d}, st}
 	}
-	return d
+	return structuralDriver{d, st}
+}
+
+// structural adds the convergence trio (engine.Converger/Inventory/Pruner) to a
+// plugin that advertised capConverger. It holds d as a plain field (not embedded)
+// so combining it with the versionless/templater/admin wrappers — which embed
+// *pluginDriver — never produces an ambiguous selector for the base methods.
+type structural struct{ d *pluginDriver }
+
+func (s structural) Converge(ctx context.Context, inst engine.Instance, tc engine.Toolchain, ep engine.Endpoint) error {
+	return s.d.converge(ctx, inst, tc, ep)
+}
+func (s structural) Objects(inst engine.Instance) []engine.Object { return s.d.objects(inst) }
+func (s structural) Prune(ctx context.Context, inst engine.Instance, tc engine.Toolchain, ep engine.Endpoint, removed []engine.Object) error {
+	return s.d.prune(ctx, inst, tc, ep, removed)
+}
+
+var (
+	_ engine.Converger = structural{}
+	_ engine.Inventory = structural{}
+	_ engine.Pruner    = structural{}
+)
+
+// The eight structural variants pair the convergence trio with every subset of the
+// versionless/templater/admin presence-capabilities. Each embeds the matching v/t/a
+// wrapper (which embeds *pluginDriver, so Driver/Spawner/etc. promote through) plus
+// structural (which adds the trio).
+type structuralDriver struct {
+	*pluginDriver
+	structural
+}
+type versionlessStructuralDriver struct {
+	versionlessDriver
+	structural
+}
+type templaterStructuralDriver struct {
+	templaterDriver
+	structural
+}
+type adminStructuralDriver struct {
+	adminDriver
+	structural
+}
+type versionlessTemplaterStructuralDriver struct {
+	versionlessTemplaterDriver
+	structural
+}
+type versionlessAdminStructuralDriver struct {
+	versionlessAdminDriver
+	structural
+}
+type templaterAdminStructuralDriver struct {
+	templaterAdminDriver
+	structural
+}
+type versionlessTemplaterAdminStructuralDriver struct {
+	versionlessTemplaterAdminDriver
+	structural
 }
 
 // adminDriver adds engine.Admin to a plugin driver that advertised it, so the
@@ -196,18 +296,20 @@ func (d *pluginDriver) ConnString(inst engine.Instance, ep engine.Endpoint) (str
 	return resp.EnvVar, resp.Url
 }
 
-// DecodeRemote sends the block's source file + flattened variables to the plugin,
-// which decodes its own config and returns it as opaque gob bytes (a RawSpec).
-func (d *pluginDriver) DecodeRemote(file []byte, blockType, blockLabel string, vars map[string]cty.Value, baseDir string) (any, error) {
+// DecodeRemote sends the block's source file + flattened variables + declared
+// engine version to the plugin, which decodes its own config and returns it as
+// opaque gob bytes (a RawSpec).
+func (d *pluginDriver) DecodeRemote(file []byte, blockType, blockLabel string, vars map[string]cty.Value, baseDir string, version engine.VersionSpec) (any, error) {
 	vj, err := varsToJSON(vars)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := d.client.DecodeConfig(context.Background(), &proto.DecodeRequest{
 		File: file, BlockType: blockType, BlockLabel: blockLabel, Variables: vj, BaseDir: baseDir,
+		EngineVersion: string(version),
 	})
 	if err != nil {
-		return nil, err
+		return nil, userError(err)
 	}
 	return &RawSpec{Bytes: resp.Spec}, nil
 }
@@ -235,11 +337,12 @@ func (d *pluginDriver) cloneTemplate(ctx context.Context, templateDir, destDir s
 	return err
 }
 
-// ── optional capabilities (no-op unless advertised) ──────────────────────────
-func (d *pluginDriver) Converge(ctx context.Context, inst engine.Instance, tc engine.Toolchain, ep engine.Endpoint) error {
-	if !d.has(capConverger) {
-		return nil
-	}
+// ── optional capabilities ────────────────────────────────────────────────────
+// converge/objects/prune forward the convergence capabilities over gRPC. They are
+// reached only via the structural wrappers, installed only when capConverger was
+// advertised (the three travel as a unit), so no per-call capability guard is
+// needed — mirroring actions/resources/runAction for engine.Admin.
+func (d *pluginDriver) converge(ctx context.Context, inst engine.Instance, tc engine.Toolchain, ep engine.Endpoint) error {
 	pi, err := instanceToProto(inst)
 	if err != nil {
 		return err
@@ -302,10 +405,7 @@ func (d *pluginDriver) Attributes(inst engine.Instance, ep engine.Endpoint) map[
 	return attrs
 }
 
-func (d *pluginDriver) Objects(inst engine.Instance) []engine.Object {
-	if !d.has(capInventory) {
-		return nil
-	}
+func (d *pluginDriver) objects(inst engine.Instance) []engine.Object {
 	pi, err := instanceToProto(inst)
 	if err != nil {
 		return nil
@@ -317,10 +417,7 @@ func (d *pluginDriver) Objects(inst engine.Instance) []engine.Object {
 	return objectsFromProto(resp.Objects)
 }
 
-func (d *pluginDriver) Prune(ctx context.Context, inst engine.Instance, tc engine.Toolchain, ep engine.Endpoint, removed []engine.Object) error {
-	if !d.has(capPruner) {
-		return nil
-	}
+func (d *pluginDriver) prune(ctx context.Context, inst engine.Instance, tc engine.Toolchain, ep engine.Endpoint, removed []engine.Object) error {
 	pi, err := instanceToProto(inst)
 	if err != nil {
 		return err

@@ -18,13 +18,16 @@ package binaries
 // name is joined to.
 const DefaultMirrorRoot = "https://github.com/doze-dev/doze-binaries/releases/download"
 
-// Manifest is the multi-engine index the mirror serves at <base>/index.yaml.
+// Manifest is the multi-engine index the ENGINE-BINARIES mirror serves at
+// <base>/index.yaml (doze-binaries). It is not the module registry's format:
+// plugin modules are described by the signed modindex.Index, whose versions are
+// module releases, not engine versions.
 type Manifest struct {
 	Engines map[string]EngineManifest `yaml:"engines"`
 }
 
 // EngineManifest is one engine's slice of the manifest: a major->full version
-// map plus, per full version, a triple->artifact map.
+// map ("16" -> "16.14.0") plus, per full version, a triple->artifact map.
 type EngineManifest struct {
 	Versions  map[string]string                      `yaml:"versions"`
 	Artifacts map[string]map[string]ManifestArtifact `yaml:"artifacts"`

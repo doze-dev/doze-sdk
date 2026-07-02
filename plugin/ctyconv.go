@@ -10,6 +10,11 @@ import (
 // later call; only the owning plugin decodes them back to its typed struct.
 type RawSpec struct{ Bytes []byte }
 
+// Raw exposes the opaque spec bytes so the host can fingerprint an instance's
+// config (for drift detection) without decoding it or importing this package's
+// concrete type — core asserts inst.Spec to interface{ Raw() []byte }.
+func (r *RawSpec) Raw() []byte { return r.Bytes }
+
 // varsToJSON serializes an eval context's variables for the wire: each top-level
 // value (var.*, local.*, a resource's attribute object, each.*/count.*) is encoded
 // with ctyjson so the plugin can reconstruct the EvalContext to evaluate references

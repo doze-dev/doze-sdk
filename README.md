@@ -83,11 +83,14 @@ DOZE_MODULES_MIRROR=https://your-host/modules doze up
 #   …or commit it to a project:  modules { mirror = "https://your-host/modules" }
 ```
 
-doze fetches the binary for the host platform, verifies its checksum, caches it
-under `~/.doze/modules`, pins it in `doze.lock`, and launches it. The official
-engines live in [`doze-modules`](https://github.com/doze-dev/doze-modules);
-adding one there is a PR. There is no other privileged registry — third-party
-engines distribute via the mirror override.
+doze fetches the binary for the host platform from the signed registry, verifies
+the publisher's **ed25519 signature** (and its checksum), caches it under
+`~/.doze/modules`, pins it in `doze.lock`, and launches it. The official engines
+live in [`doze-modules`](https://github.com/doze-dev/doze-modules); adding one is
+a PR, and [`doze-registry`](https://github.com/doze-dev/doze-registry) CI signs
+it into the registry on release. Third-party engines distribute by publishing to
+their own registry namespace (or, for local/private use, a signed `file://`
+mirror) — an *unsigned* `DOZE_MODULES_MIRROR` is rejected at runtime.
 
 ## Versioning & compatibility
 

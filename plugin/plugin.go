@@ -15,10 +15,16 @@ import (
 	"github.com/doze-dev/doze-sdk/plugin/proto"
 )
 
+// ProtocolVersion is the doze plugin protocol this SDK speaks. It gates
+// host↔plugin compatibility twice: at selection time (a module release's
+// `protocol` in the signed registry index must equal the host's) and at launch
+// (the go-plugin handshake). A wire-incompatible SDK change bumps it.
+const ProtocolVersion = 1
+
 // Handshake gates host↔plugin compatibility; a mismatched ProtocolVersion or
 // cookie aborts the launch cleanly.
 var Handshake = goplugin.HandshakeConfig{
-	ProtocolVersion:  1,
+	ProtocolVersion:  ProtocolVersion,
 	MagicCookieKey:   "DOZE_PLUGIN",
 	MagicCookieValue: "engine",
 }

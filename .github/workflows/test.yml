@@ -1,0 +1,31 @@
+# Build + test the doze SDK on every PR and push. The SDK had no CI, yet it holds
+# the load-bearing plugin protocol: `go test ./...` here runs the real plugin
+# round-trip (TestEchoRoundTrip builds + launches the echo plugin over gRPC), the
+# config-decode-over-the-wire test (kvtest), the capability-discovery table test,
+# and the binaries fetcher/lock tests — on both Linux and macOS.
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -race ./...

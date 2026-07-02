@@ -200,7 +200,7 @@ func (s *engineServer) DecodeConfig(_ context.Context, req *proto.DecodeRequest)
 		return nil, fmt.Errorf("decoding variables: %w", err)
 	}
 	ctx := &hcl.EvalContext{Variables: vars}
-	spec, err := dec.DecodeConfig(remain, ctx, req.BaseDir)
+	spec, err := dec.DecodeConfig(remain, ctx, req.BaseDir, engine.VersionSpec(req.EngineVersion))
 	if err != nil {
 		return nil, err
 	}

@@ -60,11 +60,11 @@ type Driver interface {
 
 // RemoteDecoder is implemented by a plugin-backed driver: it decodes its own HCL
 // block out-of-process. The config evaluator uses it instead of ConfigDecoder for
-// plugin engines, handing over the source file, the block address, and the
-// flattened eval-context variables; the result is an opaque spec only the plugin
-// understands.
+// plugin engines, handing over the source file, the block address, the flattened
+// eval-context variables, and the instance's declared engine version; the result
+// is an opaque spec only the plugin understands.
 type RemoteDecoder interface {
-	DecodeRemote(file []byte, blockType, blockLabel string, vars map[string]cty.Value, baseDir string) (any, error)
+	DecodeRemote(file []byte, blockType, blockLabel string, vars map[string]cty.Value, baseDir string, version VersionSpec) (any, error)
 }
 
 // LegacySpawner is the pre-SpawnPlan run path: the driver starts the backend
@@ -214,9 +214,62 @@ type Versionless interface {
 // ConfigDecoder is implemented by drivers that decode their own config block
 // body into an EngineConfig. config calls it for each block whose keyword
 // matches a registered driver. baseDir is the config file's directory, for
-// resolving relative paths (e.g. extension source bundles).
+// resolving relative paths (e.g. extension source bundles). version is the
+// instance's declared engine version (empty for versionless engines) so the
+// driver can reject version-gated arguments at decode time — see RequireVersion.
 type ConfigDecoder interface {
-	DecodeConfig(body hcl.Body, ctx *hcl.EvalContext, baseDir string) (EngineConfig, error)
+	DecodeConfig(body hcl.Body, ctx *hcl.EvalContext, baseDir string, version VersionSpec) (EngineConfig, error)
+}
+
+// Describer is implemented by drivers that publish their own catalog metadata —
+// the config schema, an example, port, version labels, and a tagline — so the
+// module registry's meta.yaml is generated from the driver (the single source of
+// truth) rather than hand-authored and left to drift. The build tool (`dzm meta`)
+// calls Describe and writes the result; a driver test asserts every HCL argument
+// appears in the description. Optional.
+type Describer interface {
+	Describe() Description
+}
+
+// Description is the published catalog metadata for one engine module. Fields map
+// onto the registry's meta.yaml shape.
+type Description struct {
+	Title        string      // human name, e.g. "PostgreSQL"
+	Tagline      string      // one-line summary
+	Category     string      // e.g. "database", "cache", "queue", "workflow"
+	Description  string      // a paragraph
+	Port         int         // the conventional/default client port
+	Versions     []string    // selectable version labels, e.g. ["16","17","18"]
+	Example      string        // a complete HCL block example
+	ExampleLabel string        // the instance label used in Example
+	Config       []ConfigArg   // one per top-level HCL argument the block accepts
+	Blocks       []ConfigBlock // one per nested block type (role, bucket, queue, …)
+	Homepage     string
+	Source       string // the module source address, e.g. "doze/postgres"
+}
+
+// ConfigBlock documents one nested block type an engine block accepts, with its
+// own argument table (rendered as a sub-section in the registry docs).
+type ConfigBlock struct {
+	Name  string      // the block keyword, e.g. "role"
+	Label string      // what the block label means ("name", "role"), "" if unlabeled
+	Desc  string      // one-line description
+	Args  []ConfigArg // the block's arguments
+}
+
+// ConfigArg documents one HCL argument (or nested block) an engine block accepts.
+type ConfigArg struct {
+	Name     string // the HCL attribute/block name
+	Type     string // "string" | "number" | "bool" | "map(string)" | "block" | …
+	Default  string // rendered default, "" if none
+	Desc     string // one-line description
+	Required bool
+	// Since/Until bound the engine MAJORS the argument applies to ("18" = added
+	// in engine 18; both empty = all versions). Rendered as version badges in the
+	// registry docs; the driver enforces the same bound in DecodeConfig (usually
+	// via RequireVersion) so docs and validation share one source.
+	Since string
+	Until string
 }
 
 // Templater is implemented by engines that support copy-on-write data-dir

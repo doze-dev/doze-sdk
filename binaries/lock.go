@@ -2,8 +2,10 @@ package binaries
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 
 	"gopkg.in/yaml.v3"
@@ -23,10 +25,10 @@ const LockFileName = "doze.lock"
 type Lock struct {
 	// Engines maps engine type -> version spec ("16" or "16.14") -> pin.
 	Engines map[string]map[string]*lockPin `yaml:"engines"`
-	// Modules maps plugin module name -> version spec ("default") -> pin. This is
-	// the second pin layer: the plugin binary doze fetches from the registry, above
-	// the service binary the plugin itself resolves.
-	Modules map[string]map[string]*lockPin `yaml:"modules,omitempty"`
+	// Modules maps a module source ("doze/postgres") to its pin — one pin per
+	// source. This is the second pin layer: the plugin binary doze fetches from
+	// the registry, above the service binary the plugin itself resolves.
+	Modules map[string]*ModulePin `yaml:"modules,omitempty"`
 	// Keys pins each registry namespace to its publisher's base64 ed25519 public
 	// key (trust-on-first-use): once recorded, a changed key is rejected until the
 	// pin is cleared, so a compromised registry can't silently swap signing keys.
@@ -40,6 +42,17 @@ type lockPin struct {
 	Resolved string            `yaml:"resolved"`         // full version, e.g. "16.14.0"
 	Source   string            `yaml:"source"`           // "mirror", "override"
 	Hashes   map[string]string `yaml:"hashes,omitempty"` // triple -> "sha256:<hex>"
+}
+
+// ModulePin pins one registry module source to an exact release. Version is the
+// MODULE release ("0.2.0"), a different axis from the engine versions in the
+// Engines layer. Protocol and Engines are copied from the verified index at pin
+// time so protocol/engine-support gating works offline.
+type ModulePin struct {
+	Version  string            `yaml:"version"`
+	Protocol int               `yaml:"protocol,omitempty"`
+	Engines  []string          `yaml:"engines,omitempty"` // supported engine majors; empty = no gate
+	Hashes   map[string]string `yaml:"hashes,omitempty"`  // triple -> "sha256:<hex>", every published triple
 }
 
 // LoadLock reads the lockfile at path. A missing file yields an empty lock.
@@ -57,6 +70,14 @@ func LoadLock(path string) (*Lock, error) {
 	}
 	if l.Engines == nil {
 		l.Engines = map[string]map[string]*lockPin{}
+	}
+	// Drop pre-redesign module entries (their nested channel maps parse to a
+	// versionless ModulePin). They re-pin on the next resolve.
+	for source, p := range l.Modules {
+		if p == nil || p.Version == "" {
+			delete(l.Modules, source)
+			l.dirty = true
+		}
 	}
 	l.path = path
 	return l, nil
@@ -131,48 +152,53 @@ func (l *Lock) Entries() []engine.LockEntry {
 	return out
 }
 
-// GetModule returns the pin for plugin module (name, spec), if present.
-func (l *Lock) GetModule(name, spec string) (engine.Pin, bool) {
+// GetModule returns the pin for a module source ("doze/postgres"), if present.
+func (l *Lock) GetModule(source string) (ModulePin, bool) {
 	if l == nil {
-		return engine.Pin{}, false
+		return ModulePin{}, false
 	}
-	p, ok := l.Modules[name][spec]
-	if !ok {
-		return engine.Pin{}, false
+	p := l.Modules[source]
+	// A pin without a version is a pre-redesign entry that survived parsing
+	// (its nested fields are simply unknown keys to ModulePin) — treat as absent.
+	if p == nil || p.Version == "" {
+		return ModulePin{}, false
 	}
-	return engine.Pin{Resolved: p.Resolved, Source: p.Source, Hashes: copyMap(p.Hashes)}, true
+	return ModulePin{Version: p.Version, Protocol: p.Protocol, Engines: append([]string(nil), p.Engines...), Hashes: copyMap(p.Hashes)}, true
 }
 
-// RecordModule pins a plugin module (name, spec) to a resolved version and merges
-// the platform's archive hash — the doze-modules layer of the lock.
-func (l *Lock) RecordModule(name, spec string, pin engine.Pin) {
-	if l == nil {
+// RecordModule pins a module source to a release — the doze-modules layer of the
+// lock. It replaces any existing pin for the source (that is how `doze modules
+// upgrade` moves a pin).
+func (l *Lock) RecordModule(source string, pin ModulePin) {
+	if l == nil || pin.Version == "" {
 		return
 	}
 	if l.Modules == nil {
-		l.Modules = map[string]map[string]*lockPin{}
+		l.Modules = map[string]*ModulePin{}
 	}
-	if l.Modules[name] == nil {
-		l.Modules[name] = map[string]*lockPin{}
+	p := l.Modules[source]
+	if p != nil && p.Version == pin.Version && p.Protocol == pin.Protocol &&
+		slices.Equal(p.Engines, pin.Engines) && maps.Equal(p.Hashes, pin.Hashes) {
+		return
 	}
-	p := l.Modules[name][spec]
-	if p == nil || p.Resolved != pin.Resolved {
-		p = &lockPin{Resolved: pin.Resolved, Source: pin.Source, Hashes: map[string]string{}}
-		l.Modules[name][spec] = p
+	l.Modules[source] = &ModulePin{
+		Version:  pin.Version,
+		Protocol: pin.Protocol,
+		Engines:  append([]string(nil), pin.Engines...),
+		Hashes:   copyMap(pin.Hashes),
+	}
+	l.dirty = true
+}
+
+// DropModule removes a module source's pin (used before re-resolving on upgrade
+// failure paths and by tests).
+func (l *Lock) DropModule(source string) {
+	if l == nil {
+		return
+	}
+	if _, ok := l.Modules[source]; ok {
+		delete(l.Modules, source)
 		l.dirty = true
-	}
-	if p.Source == "" && pin.Source != "" {
-		p.Source = pin.Source
-		l.dirty = true
-	}
-	for triple, sha := range pin.Hashes {
-		if p.Hashes == nil {
-			p.Hashes = map[string]string{}
-		}
-		if p.Hashes[triple] != sha {
-			p.Hashes[triple] = sha
-			l.dirty = true
-		}
 	}
 }
 
@@ -245,8 +271,6 @@ func copyMap(m map[string]string) map[string]string {
 		return nil
 	}
 	out := make(map[string]string, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
+	maps.Copy(out, m)
 	return out
 }

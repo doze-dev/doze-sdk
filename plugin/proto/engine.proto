@@ -100,6 +100,11 @@ message DecodeRequest {
   string block_label = 3;               // instance name (block label)
   map<string, bytes> variables = 4;     // eval-context vars, each ctyjson-encoded
   string base_dir = 5;
+  // The instance's declared engine version ("18", "16.14"; empty for
+  // versionless engines). Core owns the field; it is passed alongside the body
+  // (stripSchema still removes it from the block) so the plugin can validate
+  // version-gated arguments at decode time.
+  string engine_version = 6;
 }
 message DecodeResponse { bytes spec = 1; } // the plugin's gob-encoded config
 

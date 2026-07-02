@@ -153,7 +153,9 @@ func (m *Manager) ResolveMajor(eng, major string) (string, error) {
 // Ensure makes the toolchain for (engine, full) present and returns its bin dir
 // and verified "sha256:<hex>" digest. It checks the content-addressed cache
 // first, then downloads and verifies from the mirror. expectedSHA, when set
-// (from the lockfile), must match.
+// (from the lockfile), must match. This is the engine-binaries path: the
+// artifact record comes from the mirror's engine manifest. Module plugins use
+// EnsureArtifact with a record their signed index already selected.
 func (m *Manager) Ensure(ctx context.Context, eng, full string, plat engine.Platform, expectedSHA string) (binDir, digest string, err error) {
 	contentDir := filepath.Join(m.Home, eng, full+"-"+plat.Triple)
 	binDir = filepath.Join(contentDir, "bin")
@@ -173,6 +175,28 @@ func (m *Manager) Ensure(ctx context.Context, eng, full string, plat engine.Plat
 	if !strings.Contains(url, "://") {
 		url = strings.TrimRight(m.mirrorBase(eng), "/") + "/" + strings.TrimLeft(url, "/")
 	}
+	return m.ensureDownload(eng, full, plat, url, art.SHA256, art.Sig, expectedSHA)
+}
+
+// EnsureArtifact makes a module archive present in the cache for (name, full)
+// and returns its bin dir and verified digest. Unlike Ensure it consults no
+// engine manifest: the caller (the module fetcher) has already picked the
+// artifact record out of a verified modindex.Index, so url/sha256/sig arrive
+// explicitly and url must be absolute.
+func (m *Manager) EnsureArtifact(_ context.Context, name, full string, plat engine.Platform, url, sha256Hex, sig, expectedSHA string) (binDir, digest string, err error) {
+	contentDir := filepath.Join(m.Home, name, full+"-"+plat.Triple)
+	binDir = filepath.Join(contentDir, "bin")
+	if dirHasFiles(binDir) {
+		return binDir, readShaMeta(contentDir), nil
+	}
+	return m.ensureDownload(name, full, plat, url, sha256Hex, sig, expectedSHA)
+}
+
+// ensureDownload downloads, verifies (checksum, lock pin, publisher signature
+// when a SigningKey is set), extracts, and caches one archive.
+func (m *Manager) ensureDownload(eng, full string, plat engine.Platform, url, wantSHA, sig, expectedSHA string) (binDir, digest string, err error) {
+	contentDir := filepath.Join(m.Home, eng, full+"-"+plat.Triple)
+	binDir = filepath.Join(contentDir, "bin")
 
 	m.logf("downloading %s %s (%s)…", eng, full, plat.Triple)
 	archive, err := m.get(url)
@@ -186,9 +210,9 @@ func (m *Manager) Ensure(ctx context.Context, eng, full string, plat engine.Plat
 		if digest != expectedSHA {
 			return "", "", fmt.Errorf("checksum mismatch for %s %s (%s): locked %s, got %s", eng, full, plat.Triple, expectedSHA, digest)
 		}
-	case art.SHA256 != "":
-		if !strings.EqualFold(gotSum, art.SHA256) {
-			return "", "", fmt.Errorf("checksum mismatch for %s %s (%s): manifest %s, got %s", eng, full, plat.Triple, art.SHA256, gotSum)
+	case wantSHA != "":
+		if !strings.EqualFold(gotSum, wantSHA) {
+			return "", "", fmt.Errorf("checksum mismatch for %s %s (%s): manifest %s, got %s", eng, full, plat.Triple, wantSHA, gotSum)
 		}
 	default:
 		return "", "", fmt.Errorf("no checksum available to verify %s %s (%s)", eng, full, plat.Triple)
@@ -197,7 +221,7 @@ func (m *Manager) Ensure(ctx context.Context, eng, full string, plat engine.Plat
 	// Signed registry path: the artifact must carry a valid publisher signature
 	// over its checksum. Rejects unsigned or tampered modules.
 	if m.SigningKey != nil {
-		if err := verifySig(m.SigningKey, gotSum, art.Sig); err != nil {
+		if err := verifySig(m.SigningKey, gotSum, sig); err != nil {
 			return "", "", fmt.Errorf("signature check failed for %s %s (%s): %w", eng, full, plat.Triple, err)
 		}
 	}

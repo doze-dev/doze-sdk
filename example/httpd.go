@@ -82,8 +82,10 @@ func (Driver) Provisioned(dataDir string) bool {
 
 // DecodeConfig (engine.ConfigDecoder) decodes the engine-specific HCL body into a
 // Config. doze strips the common fields (version, listen) first and hands over the
-// rest, already resolved against variables/locals via ctx.
-func (Driver) DecodeConfig(body hcl.Body, ctx *hcl.EvalContext, _ string) (engine.EngineConfig, error) {
+// rest, already resolved against variables/locals via ctx. The declared engine
+// version also arrives here — a versioned engine would gate version-specific
+// arguments with engine.RequireVersion; httpd is versionless, so it ignores it.
+func (Driver) DecodeConfig(body hcl.Body, ctx *hcl.EvalContext, _ string, _ engine.VersionSpec) (engine.EngineConfig, error) {
 	var c Config
 	if d := gohcl.DecodeBody(body, ctx, &c); d.HasErrors() {
 		return nil, fmt.Errorf("%s", d.Error())
