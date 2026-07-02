@@ -84,10 +84,12 @@ func targetTriple(goos, goarch string) (string, error) {
 		switch goarch {
 		case "arm64":
 			return "aarch64-apple-darwin", nil
-			// Intel Mac (darwin/amd64) is intentionally unsupported — Apple Silicon only.
+		case "amd64":
+			// Policy, not an accident — say so, or this reads as a packaging bug.
+			return "", fmt.Errorf("Intel Macs (darwin/amd64) are not supported — doze runs on Apple Silicon Macs and x86-64/arm64 Linux; on an Intel Mac, use a Linux devcontainer or VM")
 		}
 	}
-	return "", fmt.Errorf("unsupported platform %s/%s", goos, goarch)
+	return "", fmt.Errorf("unsupported platform %s/%s (doze supports Apple Silicon macOS and x86-64/arm64 Linux)", goos, goarch)
 }
 
 // mirrorBase returns the mirror base URL for an engine. Each engine has its own

@@ -268,7 +268,7 @@ func (d *pluginDriver) Provision(ctx context.Context, inst engine.Instance, tc e
 		return err
 	}
 	_, err = d.client.Provision(ctx, &proto.ProvisionRequest{Instance: pi, Toolchain: toolchainToProto(tc)})
-	return err
+	return userError(err)
 }
 
 func (d *pluginDriver) Provisioned(dataDir string) bool {
@@ -322,7 +322,7 @@ func (d *pluginDriver) Plan(ctx context.Context, inst engine.Instance, tc engine
 	}
 	resp, err := d.client.Plan(ctx, &proto.PlanRequest{Instance: pi, Toolchain: toolchainToProto(tc)})
 	if err != nil {
-		return engine.SpawnPlan{}, err
+		return engine.SpawnPlan{}, userError(err)
 	}
 	return planFromProto(resp), nil
 }
@@ -330,11 +330,11 @@ func (d *pluginDriver) Plan(ctx context.Context, inst engine.Instance, tc engine
 // ── engine.Templater (exposed only via the templater wrappers) ───────────────
 func (d *pluginDriver) ensureTemplate(ctx context.Context, tc engine.Toolchain, templateDir string) error {
 	_, err := d.client.EnsureTemplate(ctx, &proto.EnsureTemplateRequest{Toolchain: toolchainToProto(tc), TemplateDir: templateDir})
-	return err
+	return userError(err)
 }
 func (d *pluginDriver) cloneTemplate(ctx context.Context, templateDir, destDir string) error {
 	_, err := d.client.CloneTemplate(ctx, &proto.CloneTemplateRequest{TemplateDir: templateDir, DestDir: destDir})
-	return err
+	return userError(err)
 }
 
 // ── optional capabilities ────────────────────────────────────────────────────
@@ -348,7 +348,7 @@ func (d *pluginDriver) converge(ctx context.Context, inst engine.Instance, tc en
 		return err
 	}
 	_, err = d.client.Converge(ctx, &proto.ConvergeRequest{Instance: pi, Toolchain: toolchainToProto(tc), Endpoint: endpointToProto(ep)})
-	return err
+	return userError(err)
 }
 
 // actions/resources/runAction forward the engine.Admin capability over gRPC. They
@@ -369,7 +369,7 @@ func (d *pluginDriver) resources(ctx context.Context, inst engine.Instance, ep e
 	}
 	resp, err := d.client.Resources(ctx, &proto.ResourcesRequest{Instance: pi, Endpoint: endpointToProto(ep)})
 	if err != nil {
-		return nil, err
+		return nil, userError(err)
 	}
 	return resourcesFromProto(resp.Resources), nil
 }
@@ -381,7 +381,7 @@ func (d *pluginDriver) runAction(ctx context.Context, inst engine.Instance, ep e
 	}
 	resp, err := d.client.RunAction(ctx, &proto.RunActionRequest{Instance: pi, Endpoint: endpointToProto(ep), Action: action, Resource: resource, Input: input})
 	if err != nil {
-		return "", err
+		return "", userError(err)
 	}
 	return resp.Result, nil
 }
@@ -423,7 +423,7 @@ func (d *pluginDriver) prune(ctx context.Context, inst engine.Instance, tc engin
 		return err
 	}
 	_, err = d.client.Prune(ctx, &proto.PruneRequest{Instance: pi, Toolchain: toolchainToProto(tc), Endpoint: endpointToProto(ep), Removed: objectsToProto(removed)})
-	return err
+	return userError(err)
 }
 
 func (d *pluginDriver) BackendURL(inst engine.Instance) string {
@@ -471,7 +471,7 @@ func (d *pluginDriver) hook(ctx context.Context, inst engine.Instance, phase str
 		return err
 	}
 	_, err = d.client.Hook(ctx, &proto.HookRequest{Instance: pi, Phase: phase})
-	return err
+	return userError(err)
 }
 
 func (d *pluginDriver) CheckHealth(ctx context.Context, inst engine.Instance) error {
@@ -483,7 +483,7 @@ func (d *pluginDriver) CheckHealth(ctx context.Context, inst engine.Instance) er
 		return err
 	}
 	_, err = d.client.CheckHealth(ctx, &proto.HealthRequest{Instance: pi})
-	return err
+	return userError(err)
 }
 
 func (d *pluginDriver) RestartPolicy(inst engine.Instance) engine.RestartSpec {
