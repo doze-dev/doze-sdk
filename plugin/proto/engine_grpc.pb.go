@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.35.1
-// source: plugin/proto/engine.proto
+// source: engine.proto
 
 package proto
 
@@ -1047,5 +1047,5 @@ var Engine_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "plugin/proto/engine.proto",
+	Metadata: "engine.proto",
 }

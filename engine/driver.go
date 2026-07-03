@@ -60,11 +60,12 @@ type Driver interface {
 
 // RemoteDecoder is implemented by a plugin-backed driver: it decodes its own HCL
 // block out-of-process. The config evaluator uses it instead of ConfigDecoder for
-// plugin engines, handing over the source file, the block address, the flattened
-// eval-context variables, and the instance's declared engine version; the result
-// is an opaque spec only the plugin understands.
+// plugin engines, handing over the source file (and its real name, so plugin
+// diagnostics point at the user's actual config), the block address, the
+// flattened eval-context variables, and the instance's declared engine version;
+// the result is an opaque spec only the plugin understands.
 type RemoteDecoder interface {
-	DecodeRemote(file []byte, blockType, blockLabel string, vars map[string]cty.Value, baseDir string, version VersionSpec) (any, error)
+	DecodeRemote(file []byte, filename, blockType, blockLabel string, vars map[string]cty.Value, baseDir string, version VersionSpec) (any, error)
 }
 
 // LegacySpawner is the pre-SpawnPlan run path: the driver starts the backend

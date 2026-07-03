@@ -44,7 +44,7 @@ func TestRemoteDecode(t *testing.T) {
 	vars := map[string]cty.Value{
 		"var": cty.ObjectVal(map[string]cty.Value{"cap": cty.StringVal("256mb")}),
 	}
-	spec, err := rd.DecodeRemote(file, "kv", "cache", vars, ".", "9")
+	spec, err := rd.DecodeRemote(file, "doze.hcl", "kv", "cache", vars, ".", "9")
 	if err != nil {
 		t.Fatalf("DecodeRemote: %v", err)
 	}

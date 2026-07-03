@@ -27,6 +27,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
 
 	"github.com/doze-dev/doze-sdk/binaries"
@@ -60,6 +61,17 @@ type Backend struct {
 // Cleanup (stop processes) is registered on t. The test is skipped if the engine's
 // BINDIR env is unset.
 func Boot(t *testing.T, drv engine.Driver, opts Options) *Backend {
+	t.Helper()
+	f, diags := hclparse.NewParser().ParseHCL([]byte(opts.HCL), "acc.hcl")
+	if diags.HasErrors() {
+		t.Fatalf("parsing acceptance HCL: %s", diags.Error())
+	}
+	return bootBody(t, drv, opts, f.Body)
+}
+
+// bootBody is Boot over an already-parsed engine block body — the shared path
+// under Boot (a raw HCL string) and BootExample (a Describe().Example block).
+func bootBody(t *testing.T, drv engine.Driver, opts Options, body hcl.Body) *Backend {
 	t.Helper()
 	engineType := drv.Type()
 	binEnv := "DOZE_" + strings.ToUpper(engineType) + "_BINDIR"
@@ -105,7 +117,7 @@ func Boot(t *testing.T, drv engine.Driver, opts Options) *Backend {
 	if err := os.MkdirAll(b.inst.SocketDir, 0o700); err != nil {
 		t.Fatalf("socket dir: %v", err)
 	}
-	b.inst.Spec = b.decode(opts.HCL)
+	b.inst.Spec = b.decodeBody(body)
 
 	if err := drv.Provision(ctx, b.inst, tc); err != nil {
 		t.Fatalf("provision %s: %v", engineType, err)
@@ -118,7 +130,7 @@ func Boot(t *testing.T, drv engine.Driver, opts Options) *Backend {
 	// flag-configured ones (their config was already baked into the SpawnPlan)
 	// skip this — the Spec is set pre-spawn regardless.
 	if _, ok := drv.(engine.Converger); ok {
-		b.Converge(opts.HCL)
+		b.convergeBody(body)
 	}
 	return b
 }
@@ -135,13 +147,23 @@ func (b *Backend) Port() int         { return b.inst.Port }
 // Converger against the live backend — the operation acceptance matrices drive.
 func (b *Backend) Converge(hcl string) {
 	b.t.Helper()
+	f, diags := hclparse.NewParser().ParseHCL([]byte(hcl), "acc.hcl")
+	if diags.HasErrors() {
+		b.t.Fatalf("parsing acceptance HCL: %s", diags.Error())
+	}
+	b.convergeBody(f.Body)
+}
+
+// convergeBody is Converge over an already-parsed body.
+func (b *Backend) convergeBody(body hcl.Body) {
+	b.t.Helper()
 	cv, ok := b.drv.(engine.Converger)
 	if !ok {
 		b.t.Fatalf("%s does not implement Converger", b.drv.Type())
 	}
-	b.inst.Spec = b.decode(hcl)
+	b.inst.Spec = b.decodeBody(body)
 	if err := cv.Converge(context.Background(), b.inst, b.tc, b.inst.Endpoint); err != nil {
-		b.t.Fatalf("converge failed for config:\n%s\nerror: %v", hcl, err)
+		b.t.Fatalf("converge failed: %v", err)
 	}
 }
 
@@ -165,18 +187,14 @@ func (b *Backend) Prune(removed []engine.Object) {
 	}
 }
 
-// decode parses the engine block body and runs the driver's ConfigDecoder.
-func (b *Backend) decode(hcl string) engine.EngineConfig {
+// decodeBody runs the driver's ConfigDecoder over a parsed engine block body.
+func (b *Backend) decodeBody(body hcl.Body) engine.EngineConfig {
 	b.t.Helper()
 	cd, ok := b.drv.(engine.ConfigDecoder)
 	if !ok {
 		b.t.Fatalf("%s does not implement ConfigDecoder", b.drv.Type())
 	}
-	f, diags := hclparse.NewParser().ParseHCL([]byte(hcl), "acc.hcl")
-	if diags.HasErrors() {
-		b.t.Fatalf("parsing acceptance HCL: %s", diags.Error())
-	}
-	spec, err := cd.DecodeConfig(f.Body, nil, b.baseDir, b.inst.Version)
+	spec, err := cd.DecodeConfig(body, nil, b.baseDir, b.inst.Version)
 	if err != nil {
 		b.t.Fatalf("decoding config: %v", err)
 	}
@@ -410,4 +428,47 @@ func (errFetcher) ResolveMajor(string, string) (string, error) {
 }
 func (errFetcher) Ensure(context.Context, string, string, engine.Platform, string) (string, string, error) {
 	return "", "", fmt.Errorf("enginetest: no network fetch — set DOZE_<ENGINE>_BINDIR")
+}
+
+// coreSchema is the set of block fields owned by doze core, stripped before a
+// driver decodes its body — the same set core's config loader (and the plugin
+// server) removes. Examples in Describe() include them (users copy examples
+// into doze.hcl verbatim), so BootExample strips them here.
+var coreSchema = &hcl.BodySchema{Attributes: []hcl.AttributeSchema{
+	{Name: "count"}, {Name: "for_each"}, {Name: "depends_on"}, {Name: "enabled"},
+	{Name: "version"}, {Name: "listen"}, {Name: "port"},
+}}
+
+// BootExample boots a backend from the driver's own Describe().Example — the
+// first config every user sees, copied verbatim into their doze.hcl. Acceptance
+// suites call this so a module whose documentation doesn't decode and converge
+// cannot ship: docs are executable, not prose. The example's block label
+// becomes the instance name (its grants/refs may name it); version is the
+// caller's (the CI backend build), not the example's.
+func BootExample(t *testing.T, drv engine.Driver, version string) *Backend {
+	t.Helper()
+	d, ok := drv.(engine.Describer)
+	if !ok {
+		t.Fatalf("%s has no Describe() — describers are mandatory", drv.Type())
+	}
+	desc := d.Describe()
+	if desc.Example == "" {
+		t.Fatalf("%s publishes no Example — every module documents one", drv.Type())
+	}
+	f, diags := hclparse.NewParser().ParseHCL([]byte(desc.Example), "example.hcl")
+	if diags.HasErrors() {
+		t.Fatalf("Describe().Example does not parse: %s", diags.Error())
+	}
+	content, _, diags := f.Body.PartialContent(&hcl.BodySchema{
+		Blocks: []hcl.BlockHeaderSchema{{Type: drv.Type(), LabelNames: []string{"name"}}},
+	})
+	if diags.HasErrors() || len(content.Blocks) == 0 {
+		t.Fatalf("Describe().Example declares no %s block: %v", drv.Type(), diags.Error())
+	}
+	block := content.Blocks[0]
+	_, remain, diags := block.Body.PartialContent(coreSchema)
+	if diags.HasErrors() {
+		t.Fatalf("stripping core fields from Example: %s", diags.Error())
+	}
+	return bootBody(t, drv, Options{Name: block.Labels[0], Version: version}, remain)
 }

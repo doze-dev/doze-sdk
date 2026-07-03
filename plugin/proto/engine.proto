@@ -105,6 +105,10 @@ message DecodeRequest {
   // (stripSchema still removes it from the block) so the plugin can validate
   // version-gated arguments at decode time.
   string engine_version = 6;
+  // The real name of the source file `file` came from, so decode diagnostics
+  // point at the user's actual config. Empty from older hosts — the plugin
+  // falls back to a synthesized "<label>.doze.hcl".
+  string filename = 7;
 }
 message DecodeResponse { bytes spec = 1; } // the plugin's gob-encoded config
 

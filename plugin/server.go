@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -171,9 +172,16 @@ func (s *engineServer) DecodeConfig(_ context.Context, req *proto.DecodeRequest)
 	if !ok {
 		return nil, status.Error(codes.Unimplemented, "engine has no config decoder")
 	}
-	file, diags := hclparse.NewParser().ParseHCL(req.File, req.BlockLabel+".doze.hcl")
+	// Parse under the real source filename when the host sends it (wire field 7,
+	// newer hosts) so diagnostics point at the user's actual config; fall back
+	// to a synthesized name for older hosts.
+	filename := req.Filename
+	if filename == "" {
+		filename = req.BlockLabel + ".doze.hcl"
+	}
+	file, diags := hclparse.NewParser().ParseHCL(req.File, filename)
 	if diags.HasErrors() {
-		return nil, fmt.Errorf("parsing config: %s", diags)
+		return nil, fmt.Errorf("parsing config: %s", diagsText(diags))
 	}
 	content, _, diags := file.Body.PartialContent(&hcl.BodySchema{
 		Blocks: []hcl.BlockHeaderSchema{{Type: req.BlockType, LabelNames: []string{"name"}}},
@@ -193,7 +201,7 @@ func (s *engineServer) DecodeConfig(_ context.Context, req *proto.DecodeRequest)
 	}
 	_, remain, diags := blockBody.PartialContent(stripSchema)
 	if diags.HasErrors() {
-		return nil, fmt.Errorf("stripping config: %s", diags)
+		return nil, fmt.Errorf("stripping config: %s", diagsText(diags))
 	}
 	vars, err := varsFromJSON(req.Variables)
 	if err != nil {
@@ -202,6 +210,13 @@ func (s *engineServer) DecodeConfig(_ context.Context, req *proto.DecodeRequest)
 	ctx := &hcl.EvalContext{Variables: vars}
 	spec, err := dec.DecodeConfig(remain, ctx, req.BaseDir, engine.VersionSpec(req.EngineVersion))
 	if err != nil {
+		// A gohcl decode error is usually hcl.Diagnostics, whose Error() hides
+		// everything past the first entry behind "and N other diagnostic(s)".
+		// The wire carries a flat string, so expand them all here.
+		var dd hcl.Diagnostics
+		if errors.As(err, &dd) {
+			return nil, fmt.Errorf("%s", diagsText(dd))
+		}
 		return nil, err
 	}
 	b, err := encodeSpec(spec)
@@ -475,4 +490,15 @@ func dozeHome() string {
 	}
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".doze")
+}
+
+// diagsText renders every diagnostic on its own line. hcl.Diagnostics.Error()
+// collapses all but the first into "and N other diagnostic(s)" — useless across
+// the plugin process boundary, where only the string survives.
+func diagsText(diags hcl.Diagnostics) string {
+	parts := make([]string, len(diags))
+	for i, d := range diags {
+		parts[i] = d.Error()
+	}
+	return strings.Join(parts, "\n")
 }

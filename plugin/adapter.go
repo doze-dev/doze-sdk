@@ -299,13 +299,13 @@ func (d *pluginDriver) ConnString(inst engine.Instance, ep engine.Endpoint) (str
 // DecodeRemote sends the block's source file + flattened variables + declared
 // engine version to the plugin, which decodes its own config and returns it as
 // opaque gob bytes (a RawSpec).
-func (d *pluginDriver) DecodeRemote(file []byte, blockType, blockLabel string, vars map[string]cty.Value, baseDir string, version engine.VersionSpec) (any, error) {
+func (d *pluginDriver) DecodeRemote(file []byte, filename, blockType, blockLabel string, vars map[string]cty.Value, baseDir string, version engine.VersionSpec) (any, error) {
 	vj, err := varsToJSON(vars)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := d.client.DecodeConfig(context.Background(), &proto.DecodeRequest{
-		File: file, BlockType: blockType, BlockLabel: blockLabel, Variables: vj, BaseDir: baseDir,
+		File: file, Filename: filename, BlockType: blockType, BlockLabel: blockLabel, Variables: vj, BaseDir: baseDir,
 		EngineVersion: string(version),
 	})
 	if err != nil {
