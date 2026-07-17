@@ -200,7 +200,9 @@ func (m *Manager) ensureDownload(eng, full string, plat engine.Platform, url, wa
 	contentDir := filepath.Join(m.Home, eng, full+"-"+plat.Triple)
 	binDir = filepath.Join(contentDir, "bin")
 
-	m.logf("downloading %s %s (%s)…", eng, full, plat.Triple)
+	// "module v%s" so the module's own version can't be misread as the engine's
+	// (a postgres module v0.2.3 ships Postgres 16, not "postgres 0.2.3").
+	m.logf("downloading %s module v%s (%s)…", eng, full, plat.Triple)
 	archive, err := m.get(url)
 	if err != nil {
 		return "", "", fmt.Errorf("downloading %s: %w", url, err)
@@ -256,7 +258,7 @@ func (m *Manager) ensureDownload(eng, full string, plat engine.Platform, url, wa
 	if !dirHasFiles(binDir) {
 		return "", "", fmt.Errorf("downloaded %s toolchain has no executables", eng)
 	}
-	m.logf("cached %s %s at %s", eng, full, contentDir)
+	m.logf("cached %s module v%s", eng, full) // the path is noise on the happy path
 	return binDir, digest, nil
 }
 
