@@ -141,6 +141,15 @@ const (
 	// satisfies it by waiting for Healthy; a supervised process engine will later
 	// use the weaker guarantee to start faster.
 	Started Condition = "started"
+	// Lazy resolves the dependency's wiring — endpoints, sockets, injected env —
+	// without booting or holding it: the dependent starts even while the
+	// dependency sleeps, and traffic through a lazily-wired endpoint wakes it
+	// on demand. For viewers and aggregators (the aws-console) that must not
+	// drag their whole dependency fleet awake just by starting. Note a
+	// sleeping lazy dependency's backend socket has no listener until
+	// something wakes it; shared client endpoints (the AWS type hosts) wake it
+	// transparently.
+	Lazy Condition = "lazy"
 )
 
 // Dependency is one instance another instance must boot first, plus the
