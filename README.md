@@ -116,3 +116,7 @@ versions — pin a version and read the release notes when you bump.
 - doze injects **no** environment into your processes — declare what they need (a
   `process` engine's `env { }` block can reference peers, e.g.
   `DATABASE_URL = postgres.app.url`).
+
+## License
+
+Apache 2.0 — see [LICENSE](LICENSE).
