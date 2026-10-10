@@ -162,7 +162,7 @@ func (m *Manager) Ensure(ctx context.Context, eng, full string, plat engine.Plat
 	contentDir := filepath.Join(m.Home, eng, full+"-"+plat.Triple)
 	binDir = filepath.Join(contentDir, "bin")
 	if dirHasFiles(binDir) {
-		return binDir, readShaMeta(contentDir), nil
+		return cached(eng, full, plat, contentDir, binDir, expectedSHA)
 	}
 
 	man, err := m.fetchManifest(eng)
@@ -189,9 +189,22 @@ func (m *Manager) EnsureArtifact(_ context.Context, name, full string, plat engi
 	contentDir := filepath.Join(m.Home, name, full+"-"+plat.Triple)
 	binDir = filepath.Join(contentDir, "bin")
 	if dirHasFiles(binDir) {
-		return binDir, readShaMeta(contentDir), nil
+		return cached(name, full, plat, contentDir, binDir, expectedSHA)
 	}
 	return m.ensureDownload(name, full, plat, url, sha256Hex, sig, expectedSHA)
+}
+
+// cached answers a cache hit. The archive is gone by now, so the check is
+// against the digest recorded when it was unpacked: a lock that pins a
+// different one must not be satisfied by whatever happens to be on disk. A
+// cache entry from before digests were recorded has nothing to compare and is
+// accepted.
+func cached(eng, full string, plat engine.Platform, contentDir, binDir, expectedSHA string) (string, string, error) {
+	digest := readShaMeta(contentDir)
+	if expectedSHA != "" && digest != "" && digest != expectedSHA {
+		return "", "", fmt.Errorf("cached %s %s (%s) is %s but the lock pins %s — remove %s to fetch it again", eng, full, plat.Triple, digest, expectedSHA, contentDir)
+	}
+	return binDir, digest, nil
 }
 
 // ensureDownload downloads, verifies (checksum, lock pin, publisher signature
