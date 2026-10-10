@@ -29,10 +29,6 @@ type Lock struct {
 	// source. This is the second pin layer: the plugin binary doze fetches from
 	// the registry, above the service binary the plugin itself resolves.
 	Modules map[string]*ModulePin `yaml:"modules,omitempty"`
-	// Keys pins each registry namespace to its publisher's base64 ed25519 public
-	// key (trust-on-first-use): once recorded, a changed key is rejected until the
-	// pin is cleared, so a compromised registry can't silently swap signing keys.
-	Keys map[string]string `yaml:"keys,omitempty"`
 
 	path  string
 	dirty bool
@@ -198,30 +194,6 @@ func (l *Lock) DropModule(source string) {
 	}
 	if _, ok := l.Modules[source]; ok {
 		delete(l.Modules, source)
-		l.dirty = true
-	}
-}
-
-// GetKey returns the pinned publisher key for a registry namespace, if any.
-func (l *Lock) GetKey(namespace string) (string, bool) {
-	if l == nil {
-		return "", false
-	}
-	k, ok := l.Keys[namespace]
-	return k, ok
-}
-
-// RecordKey pins a namespace's publisher key (trust-on-first-use). It is a no-op
-// if the same key is already pinned; the caller rejects a *different* key.
-func (l *Lock) RecordKey(namespace, key string) {
-	if l == nil || key == "" {
-		return
-	}
-	if l.Keys == nil {
-		l.Keys = map[string]string{}
-	}
-	if l.Keys[namespace] != key {
-		l.Keys[namespace] = key
 		l.dirty = true
 	}
 }

@@ -277,7 +277,7 @@ func (m *Manager) ensureDownload(eng, full string, plat engine.Platform, url, wa
 
 // Fetch retrieves a URL through the same transport Ensure uses, including the
 // file:// shortcut for local/dev mirrors. The registry fetcher uses it to pull a
-// namespace's keys.json before any signed artifact is downloaded.
+// module index and the catalog.
 func (m *Manager) Fetch(url string) ([]byte, error) { return m.get(url) }
 
 func (m *Manager) get(url string) ([]byte, error) {

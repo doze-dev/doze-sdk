@@ -3,6 +3,7 @@ package binaries
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/doze-dev/doze-sdk/engine"
@@ -133,9 +134,6 @@ keys:
 	if _, ok := lock.GetModule("doze/postgres"); ok {
 		t.Fatal("old-format entry must be treated as absent")
 	}
-	if k, ok := lock.GetKey("doze"); !ok || k != "c29tZWtleQ==" {
-		t.Fatal("keys layer must survive")
-	}
 	// A save after the scrub writes a clean file that re-pins on next resolve.
 	lock.RecordModule("doze/postgres", ModulePin{Version: "0.2.0", Protocol: 1})
 	if err := lock.Save(); err != nil {
@@ -144,6 +142,11 @@ keys:
 	reloaded, _ := LoadLock(path)
 	if got, ok := reloaded.GetModule("doze/postgres"); !ok || got.Version != "0.2.0" {
 		t.Fatalf("re-pin after scrub = %+v", got)
+	}
+	// The `keys:` map is from when the registry key was trusted on first use.
+	// It is read past, and gone after a save.
+	if saved, _ := os.ReadFile(path); strings.Contains(string(saved), "keys:") {
+		t.Fatalf("a retired keys map must not be written back:\n%s", saved)
 	}
 }
 
