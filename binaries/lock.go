@@ -29,6 +29,10 @@ type Lock struct {
 	// source. This is the second pin layer: the plugin binary doze fetches from
 	// the registry, above the service binary the plugin itself resolves.
 	Modules map[string]*ModulePin `yaml:"modules,omitempty"`
+	// Downloads maps a URL a stack runs something from — a `service` with a
+	// `download` — to the checksum of what it served the first time. Every later
+	// fetch, and every wake, must match it.
+	Downloads map[string]*DownloadPin `yaml:"downloads,omitempty"`
 
 	path  string
 	dirty bool
