@@ -126,3 +126,38 @@ func TestConsoleRoundTrip(t *testing.T) {
 		t.Fatalf("resources = %+v, %v", rs, err)
 	}
 }
+
+// A module built before consoles existed still loads and simply has none: it
+// never advertises the capability, so the host never asks, and its admin driver
+// answers an empty spec without a call. consoles.md measure "a version 1
+// module still loads".
+func TestAModuleWithoutAConsoleHasAnEmptyOne(t *testing.T) {
+	d := &pluginDriver{caps: map[string]bool{capAdmin: true}} // no client: any RPC would panic
+	var drv engine.Driver = adminDriver{d}
+	c, ok := drv.(engine.Console)
+	if !ok {
+		t.Fatalf("an admin driver is an engine.Console, with an empty spec when the module has none")
+	}
+	if spec := c.DescribeConsole(); spec.Front != "" || len(spec.Panels) != 0 || spec.WebURL != "" {
+		t.Fatalf("spec = %+v", spec)
+	}
+	if err := c.Tail(context.Background(), engine.Instance{}, engine.Endpoint{}, "p", "", make(chan engine.Row)); err == nil {
+		t.Fatal("tailing a module with no console is an error")
+	}
+
+	// And the echo module's pre-console sibling: a plain driver is not one.
+	bin := filepath.Join(t.TempDir(), "kv")
+	build := exec.Command("go", "build", "-o", bin, "./kvtest")
+	build.Stderr = os.Stderr
+	if err := build.Run(); err != nil {
+		t.Fatalf("building kvtest: %v", err)
+	}
+	h, err := Launch(bin, nil)
+	if err != nil {
+		t.Fatalf("a module without a console must still load: %v", err)
+	}
+	defer h.Close()
+	if _, ok := h.Driver().(engine.Console); ok {
+		t.Fatalf("a module that is not an admin module should not look like a console, got %T", h.Driver())
+	}
+}
