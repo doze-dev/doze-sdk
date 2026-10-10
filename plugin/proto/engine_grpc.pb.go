@@ -19,31 +19,33 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Engine_Type_FullMethodName           = "/dozeplugin.v1.Engine/Type"
-	Engine_Capabilities_FullMethodName   = "/dozeplugin.v1.Engine/Capabilities"
-	Engine_DecodeConfig_FullMethodName   = "/dozeplugin.v1.Engine/DecodeConfig"
-	Engine_Resolve_FullMethodName        = "/dozeplugin.v1.Engine/Resolve"
-	Engine_Provision_FullMethodName      = "/dozeplugin.v1.Engine/Provision"
-	Engine_Provisioned_FullMethodName    = "/dozeplugin.v1.Engine/Provisioned"
-	Engine_BackendSocket_FullMethodName  = "/dozeplugin.v1.Engine/BackendSocket"
-	Engine_ConnString_FullMethodName     = "/dozeplugin.v1.Engine/ConnString"
-	Engine_Plan_FullMethodName           = "/dozeplugin.v1.Engine/Plan"
-	Engine_Converge_FullMethodName       = "/dozeplugin.v1.Engine/Converge"
-	Engine_Objects_FullMethodName        = "/dozeplugin.v1.Engine/Objects"
-	Engine_Prune_FullMethodName          = "/dozeplugin.v1.Engine/Prune"
-	Engine_Attributes_FullMethodName     = "/dozeplugin.v1.Engine/Attributes"
-	Engine_BackendURL_FullMethodName     = "/dozeplugin.v1.Engine/BackendURL"
-	Engine_Supervised_FullMethodName     = "/dozeplugin.v1.Engine/Supervised"
-	Engine_Hook_FullMethodName           = "/dozeplugin.v1.Engine/Hook"
-	Engine_CheckHealth_FullMethodName    = "/dozeplugin.v1.Engine/CheckHealth"
-	Engine_RestartPolicy_FullMethodName  = "/dozeplugin.v1.Engine/RestartPolicy"
-	Engine_AdvertisedAddr_FullMethodName = "/dozeplugin.v1.Engine/AdvertisedAddr"
-	Engine_EnsureTemplate_FullMethodName = "/dozeplugin.v1.Engine/EnsureTemplate"
-	Engine_CloneTemplate_FullMethodName  = "/dozeplugin.v1.Engine/CloneTemplate"
-	Engine_WireAddr_FullMethodName       = "/dozeplugin.v1.Engine/WireAddr"
-	Engine_Actions_FullMethodName        = "/dozeplugin.v1.Engine/Actions"
-	Engine_Resources_FullMethodName      = "/dozeplugin.v1.Engine/Resources"
-	Engine_RunAction_FullMethodName      = "/dozeplugin.v1.Engine/RunAction"
+	Engine_Type_FullMethodName            = "/dozeplugin.v1.Engine/Type"
+	Engine_Capabilities_FullMethodName    = "/dozeplugin.v1.Engine/Capabilities"
+	Engine_DecodeConfig_FullMethodName    = "/dozeplugin.v1.Engine/DecodeConfig"
+	Engine_Resolve_FullMethodName         = "/dozeplugin.v1.Engine/Resolve"
+	Engine_Provision_FullMethodName       = "/dozeplugin.v1.Engine/Provision"
+	Engine_Provisioned_FullMethodName     = "/dozeplugin.v1.Engine/Provisioned"
+	Engine_BackendSocket_FullMethodName   = "/dozeplugin.v1.Engine/BackendSocket"
+	Engine_ConnString_FullMethodName      = "/dozeplugin.v1.Engine/ConnString"
+	Engine_Plan_FullMethodName            = "/dozeplugin.v1.Engine/Plan"
+	Engine_Converge_FullMethodName        = "/dozeplugin.v1.Engine/Converge"
+	Engine_Objects_FullMethodName         = "/dozeplugin.v1.Engine/Objects"
+	Engine_Prune_FullMethodName           = "/dozeplugin.v1.Engine/Prune"
+	Engine_Attributes_FullMethodName      = "/dozeplugin.v1.Engine/Attributes"
+	Engine_BackendURL_FullMethodName      = "/dozeplugin.v1.Engine/BackendURL"
+	Engine_Supervised_FullMethodName      = "/dozeplugin.v1.Engine/Supervised"
+	Engine_Hook_FullMethodName            = "/dozeplugin.v1.Engine/Hook"
+	Engine_CheckHealth_FullMethodName     = "/dozeplugin.v1.Engine/CheckHealth"
+	Engine_RestartPolicy_FullMethodName   = "/dozeplugin.v1.Engine/RestartPolicy"
+	Engine_AdvertisedAddr_FullMethodName  = "/dozeplugin.v1.Engine/AdvertisedAddr"
+	Engine_EnsureTemplate_FullMethodName  = "/dozeplugin.v1.Engine/EnsureTemplate"
+	Engine_CloneTemplate_FullMethodName   = "/dozeplugin.v1.Engine/CloneTemplate"
+	Engine_WireAddr_FullMethodName        = "/dozeplugin.v1.Engine/WireAddr"
+	Engine_Actions_FullMethodName         = "/dozeplugin.v1.Engine/Actions"
+	Engine_Resources_FullMethodName       = "/dozeplugin.v1.Engine/Resources"
+	Engine_RunAction_FullMethodName       = "/dozeplugin.v1.Engine/RunAction"
+	Engine_DescribeConsole_FullMethodName = "/dozeplugin.v1.Engine/DescribeConsole"
+	Engine_Tail_FullMethodName            = "/dozeplugin.v1.Engine/Tail"
 )
 
 // EngineClient is the client API for Engine service.
@@ -84,6 +86,8 @@ type EngineClient interface {
 	Actions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ActionsResponse, error)
 	Resources(ctx context.Context, in *ResourcesRequest, opts ...grpc.CallOption) (*ResourcesResponse, error)
 	RunAction(ctx context.Context, in *RunActionRequest, opts ...grpc.CallOption) (*RunActionResponse, error)
+	DescribeConsole(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ConsoleSpec, error)
+	Tail(ctx context.Context, in *TailRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ConsoleRow], error)
 }
 
 type engineClient struct {
@@ -344,6 +348,35 @@ func (c *engineClient) RunAction(ctx context.Context, in *RunActionRequest, opts
 	return out, nil
 }
 
+func (c *engineClient) DescribeConsole(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ConsoleSpec, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConsoleSpec)
+	err := c.cc.Invoke(ctx, Engine_DescribeConsole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *engineClient) Tail(ctx context.Context, in *TailRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ConsoleRow], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &Engine_ServiceDesc.Streams[0], Engine_Tail_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[TailRequest, ConsoleRow]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Engine_TailClient = grpc.ServerStreamingClient[ConsoleRow]
+
 // EngineServer is the server API for Engine service.
 // All implementations must embed UnimplementedEngineServer
 // for forward compatibility.
@@ -382,6 +415,8 @@ type EngineServer interface {
 	Actions(context.Context, *Empty) (*ActionsResponse, error)
 	Resources(context.Context, *ResourcesRequest) (*ResourcesResponse, error)
 	RunAction(context.Context, *RunActionRequest) (*RunActionResponse, error)
+	DescribeConsole(context.Context, *Empty) (*ConsoleSpec, error)
+	Tail(*TailRequest, grpc.ServerStreamingServer[ConsoleRow]) error
 	mustEmbedUnimplementedEngineServer()
 }
 
@@ -466,6 +501,12 @@ func (UnimplementedEngineServer) Resources(context.Context, *ResourcesRequest) (
 }
 func (UnimplementedEngineServer) RunAction(context.Context, *RunActionRequest) (*RunActionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RunAction not implemented")
+}
+func (UnimplementedEngineServer) DescribeConsole(context.Context, *Empty) (*ConsoleSpec, error) {
+	return nil, status.Error(codes.Unimplemented, "method DescribeConsole not implemented")
+}
+func (UnimplementedEngineServer) Tail(*TailRequest, grpc.ServerStreamingServer[ConsoleRow]) error {
+	return status.Error(codes.Unimplemented, "method Tail not implemented")
 }
 func (UnimplementedEngineServer) mustEmbedUnimplementedEngineServer() {}
 func (UnimplementedEngineServer) testEmbeddedByValue()                {}
@@ -938,6 +979,35 @@ func _Engine_RunAction_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Engine_DescribeConsole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EngineServer).DescribeConsole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Engine_DescribeConsole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EngineServer).DescribeConsole(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Engine_Tail_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(TailRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(EngineServer).Tail(m, &grpc.GenericServerStream[TailRequest, ConsoleRow]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type Engine_TailServer = grpc.ServerStreamingServer[ConsoleRow]
+
 // Engine_ServiceDesc is the grpc.ServiceDesc for Engine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1045,7 +1115,17 @@ var Engine_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "RunAction",
 			Handler:    _Engine_RunAction_Handler,
 		},
+		{
+			MethodName: "DescribeConsole",
+			Handler:    _Engine_DescribeConsole_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Tail",
+			Handler:       _Engine_Tail_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "engine.proto",
 }

@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/doze-dev/doze-sdk/engine"
 )
@@ -56,5 +57,72 @@ func TestEchoRoundTrip(t *testing.T) {
 		if err := c.Converge(context.Background(), engine.Instance{Name: "e1"}, engine.Toolchain{}, engine.Endpoint{}); err != nil {
 			t.Fatalf("unadvertised Converge should no-op, got %v", err)
 		}
+	}
+}
+
+// TestConsoleRoundTrip proves the console capability end to end: the spec
+// crosses the wire intact, a stream delivers its rows and stops when the host
+// does, and the admin half (resources, actions) is there beside it.
+func TestConsoleRoundTrip(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "echo")
+	build := exec.Command("go", "build", "-o", bin, "./echo")
+	build.Stderr = os.Stderr
+	if err := build.Run(); err != nil {
+		t.Fatalf("building echo plugin: %v", err)
+	}
+	h, err := Launch(bin, nil)
+	if err != nil {
+		t.Fatalf("launch: %v", err)
+	}
+	defer h.Close()
+
+	c, ok := h.Driver().(engine.Console)
+	if !ok {
+		t.Fatalf("a module that advertises a console should be an engine.Console, got %T", h.Driver())
+	}
+	spec := c.Describe()
+	if spec.Front != "console" || spec.WebURL != "http://{address}/_console" || len(spec.Panels) != 2 {
+		t.Fatalf("spec = %+v", spec)
+	}
+	if p := spec.Panels[0]; p.Kind != "table" || p.Source != "echo" || len(p.Columns) != 2 || p.Columns[1].Role != "count" || p.Columns[1].Align != "right" {
+		t.Fatalf("table panel = %+v", p)
+	}
+	if p := spec.Panels[1]; p.Kind != "stream" || p.Select != "echoes" {
+		t.Fatalf("stream panel = %+v", p)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	out := make(chan engine.Row, 8)
+	done := make(chan error, 1)
+	go func() {
+		done <- c.Tail(ctx, engine.Instance{Name: "e1", Type: "echo"}, engine.Endpoint{}, "wire", "hello", out)
+	}()
+	for i := 1; i <= 3; i++ {
+		select {
+		case row := <-out:
+			if want := "wire/hello #" + string(rune('0'+i)); row.Cells["text"] != want || row.Tone != "ok" {
+				t.Fatalf("row %d = %+v, want %q", i, row, want)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("row %d never arrived", i)
+		}
+	}
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("a tail stopped by the host returned %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the tail did not stop when the host hung up")
+	}
+
+	a, ok := h.Driver().(engine.Admin)
+	if !ok {
+		t.Fatalf("a console module is an admin module too, got %T", h.Driver())
+	}
+	rs, err := a.Resources(context.Background(), engine.Instance{Name: "e1", Type: "echo"}, engine.Endpoint{})
+	if err != nil || len(rs) != 2 || rs[0].Info["sent"] != "2" {
+		t.Fatalf("resources = %+v, %v", rs, err)
 	}
 }

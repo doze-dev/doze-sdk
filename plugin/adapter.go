@@ -3,6 +3,8 @@ package plugin
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"sync"
 
 	"github.com/zclconf/go-cty/cty"
@@ -42,6 +44,9 @@ type pluginDriver struct {
 	client     proto.EngineClient
 	engineType string
 	caps       map[string]bool
+
+	consoleOnce sync.Once
+	console     engine.ConsoleSpec
 
 	wireOnce sync.Once
 	wireSock string // the plugin's fd-handoff socket, resolved once via WireAddr
@@ -514,4 +519,57 @@ func (d *pluginDriver) AdvertisedAddr(inst engine.Instance) (string, bool) {
 		return "", false
 	}
 	return resp.Addr, resp.Ok
+}
+
+// Describe makes every admin driver an engine.Console whose spec is empty
+// unless the module advertised capConsole. The host reads an empty spec as
+// "no console": the overview is the front. The answer is static per module
+// version, so it is asked for once.
+func (a adminDriver) Describe() engine.ConsoleSpec { return a.pluginDriver.describeConsole() }
+
+// Tail streams a console panel's rows from the module.
+func (a adminDriver) Tail(ctx context.Context, inst engine.Instance, ep engine.Endpoint, panel, selector string, out chan<- engine.Row) error {
+	return a.pluginDriver.tail(ctx, inst, ep, panel, selector, out)
+}
+
+func (d *pluginDriver) describeConsole() engine.ConsoleSpec {
+	d.consoleOnce.Do(func() {
+		if !d.caps[capConsole] {
+			return
+		}
+		resp, err := d.client.DescribeConsole(context.Background(), &proto.Empty{})
+		if err != nil {
+			return
+		}
+		d.console = consoleSpecFromProto(resp)
+	})
+	return d.console
+}
+
+func (d *pluginDriver) tail(ctx context.Context, inst engine.Instance, ep engine.Endpoint, panel, selector string, out chan<- engine.Row) error {
+	if !d.caps[capConsole] {
+		return fmt.Errorf("%s has no console to tail", d.engineType)
+	}
+	pi, err := instanceToProto(inst)
+	if err != nil {
+		return err
+	}
+	stream, err := d.client.Tail(ctx, &proto.TailRequest{Instance: pi, Endpoint: endpointToProto(ep), Panel: panel, Selector: selector})
+	if err != nil {
+		return userError(err)
+	}
+	for {
+		row, err := stream.Recv()
+		if err != nil {
+			if ctx.Err() != nil || errors.Is(err, io.EOF) {
+				return nil
+			}
+			return userError(err)
+		}
+		select {
+		case out <- engine.Row{Cells: row.Cells, Tone: row.Tone}:
+		case <-ctx.Done():
+			return nil
+		}
+	}
 }

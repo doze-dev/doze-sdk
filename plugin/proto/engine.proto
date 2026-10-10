@@ -39,6 +39,8 @@ service Engine {
   rpc Actions(Empty) returns (ActionsResponse);                 // CAP_ADMIN
   rpc Resources(ResourcesRequest) returns (ResourcesResponse);  // CAP_ADMIN
   rpc RunAction(RunActionRequest) returns (RunActionResponse);  // CAP_ADMIN
+  rpc DescribeConsole(Empty) returns (ConsoleSpec);               // CAP_CONSOLE
+  rpc Tail(TailRequest) returns (stream ConsoleRow);               // CAP_CONSOLE
 }
 
 message Empty {}
@@ -162,3 +164,20 @@ message ResourcesRequest { Instance instance = 1; Endpoint endpoint = 2; }
 message ResourcesResponse { repeated Resource resources = 1; }
 message RunActionRequest { Instance instance = 1; Endpoint endpoint = 2; string action = 3; string resource = 4; string input = 5; }
 message RunActionResponse { string result = 1; }
+
+// ── CAP_CONSOLE: how a module's running instance is looked at ────────────────
+// Additive: a host that does not know these RPCs never calls them, and a
+// module that does not advertise the capability is never asked. That is why
+// the protocol version does not change.
+message ConsoleColumn { string key = 1; string title = 2; string align = 3; string role = 4; }
+message ConsolePanel {
+  string id = 1;
+  string title = 2;
+  string kind = 3;   // table | counters | stream
+  string source = 4; // a Resource.Kind
+  repeated ConsoleColumn columns = 5;
+  string select = 6; // for a stream: the table panel whose selection it tails
+}
+message ConsoleSpec { string front = 1; string web_url = 2; repeated ConsolePanel panels = 3; }
+message ConsoleRow { map<string, string> cells = 1; string tone = 2; }
+message TailRequest { Instance instance = 1; Endpoint endpoint = 2; string panel = 3; string selector = 4; }

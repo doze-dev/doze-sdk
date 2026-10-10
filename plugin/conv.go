@@ -239,3 +239,30 @@ func restartFromProto(r *proto.RestartSpec) engine.RestartSpec {
 	}
 	return engine.RestartSpec{Policy: engine.RestartPolicy(r.Policy), Backoff: time.Duration(r.BackoffNs), MaxRetries: int(r.MaxRetries)}
 }
+
+func consoleSpecToProto(s engine.ConsoleSpec) *proto.ConsoleSpec {
+	out := &proto.ConsoleSpec{Front: s.Front, WebUrl: s.WebURL}
+	for _, p := range s.Panels {
+		pp := &proto.ConsolePanel{Id: p.ID, Title: p.Title, Kind: p.Kind, Source: p.Source, Select: p.Select}
+		for _, c := range p.Columns {
+			pp.Columns = append(pp.Columns, &proto.ConsoleColumn{Key: c.Key, Title: c.Title, Align: c.Align, Role: c.Role})
+		}
+		out.Panels = append(out.Panels, pp)
+	}
+	return out
+}
+
+func consoleSpecFromProto(s *proto.ConsoleSpec) engine.ConsoleSpec {
+	if s == nil {
+		return engine.ConsoleSpec{}
+	}
+	out := engine.ConsoleSpec{Front: s.Front, WebURL: s.WebUrl}
+	for _, p := range s.Panels {
+		pp := engine.Panel{ID: p.Id, Title: p.Title, Kind: p.Kind, Source: p.Source, Select: p.Select}
+		for _, c := range p.Columns {
+			pp.Columns = append(pp.Columns, engine.Column{Key: c.Key, Title: c.Title, Align: c.Align, Role: c.Role})
+		}
+		out.Panels = append(out.Panels, pp)
+	}
+	return out
+}

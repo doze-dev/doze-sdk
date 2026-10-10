@@ -70,6 +70,7 @@ const (
 	capTemplater   = "templater"
 	capProxyFilter = "proxy_filter"
 	capAdmin       = "admin"
+	capConsole     = "console"
 )
 
 func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.CapabilitiesResponse, error) {
@@ -109,6 +110,8 @@ func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.Capab
 	add(pf, capProxyFilter)
 	_, ad := s.drv.(engine.Admin)
 	add(ad, capAdmin)
+	_, cs := s.drv.(engine.Console)
+	add(cs, capConsole)
 	return &proto.CapabilitiesResponse{Capabilities: caps}, nil
 }
 
@@ -501,4 +504,44 @@ func diagsText(diags hcl.Diagnostics) string {
 		parts[i] = d.Error()
 	}
 	return strings.Join(parts, "\n")
+}
+
+// ── CAP_CONSOLE handlers ─────────────────────────────────────────────────────
+
+func (s *engineServer) DescribeConsole(context.Context, *proto.Empty) (*proto.ConsoleSpec, error) {
+	c, ok := s.drv.(engine.Console)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "not a Console")
+	}
+	return consoleSpecToProto(c.Describe()), nil
+}
+
+// Tail streams a panel's rows until the host hangs up or the module stops.
+func (s *engineServer) Tail(req *proto.TailRequest, stream proto.Engine_TailServer) error {
+	c, ok := s.drv.(engine.Console)
+	if !ok {
+		return status.Error(codes.Unimplemented, "not a Console")
+	}
+	inst, err := instanceFromProto(req.Instance)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithCancel(stream.Context())
+	defer cancel()
+	out := make(chan engine.Row, 64)
+	done := make(chan error, 1)
+	go func() {
+		done <- c.Tail(ctx, inst, endpointFromProto(req.Endpoint), req.Panel, req.Selector, out)
+		close(out)
+	}()
+	for row := range out {
+		if err := stream.Send(&proto.ConsoleRow{Cells: row.Cells, Tone: row.Tone}); err != nil {
+			cancel()
+			for range out { // let the module's goroutine finish
+			}
+			<-done
+			return err
+		}
+	}
+	return <-done
 }
