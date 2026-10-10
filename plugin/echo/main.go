@@ -54,7 +54,7 @@ func (driver) Run(_ context.Context, _ engine.Instance, _ engine.Endpoint, actio
 	return action + " " + resource, nil
 }
 
-func (driver) Describe() engine.ConsoleSpec {
+func (driver) DescribeConsole() engine.ConsoleSpec {
 	return engine.ConsoleSpec{
 		Front:  "console",
 		WebURL: "http://{address}/_console",

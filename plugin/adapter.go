@@ -521,11 +521,11 @@ func (d *pluginDriver) AdvertisedAddr(inst engine.Instance) (string, bool) {
 	return resp.Addr, resp.Ok
 }
 
-// Describe makes every admin driver an engine.Console whose spec is empty
+// DescribeConsole makes every admin driver an engine.Console whose spec is empty
 // unless the module advertised capConsole. The host reads an empty spec as
 // "no console": the overview is the front. The answer is static per module
 // version, so it is asked for once.
-func (a adminDriver) Describe() engine.ConsoleSpec { return a.pluginDriver.describeConsole() }
+func (a adminDriver) DescribeConsole() engine.ConsoleSpec { return a.pluginDriver.describeConsole() }
 
 // Tail streams a console panel's rows from the module.
 func (a adminDriver) Tail(ctx context.Context, inst engine.Instance, ep engine.Endpoint, panel, selector string, out chan<- engine.Row) error {

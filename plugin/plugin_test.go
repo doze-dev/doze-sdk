@@ -80,7 +80,7 @@ func TestConsoleRoundTrip(t *testing.T) {
 	if !ok {
 		t.Fatalf("a module that advertises a console should be an engine.Console, got %T", h.Driver())
 	}
-	spec := c.Describe()
+	spec := c.DescribeConsole()
 	if spec.Front != "console" || spec.WebURL != "http://{address}/_console" || len(spec.Panels) != 2 {
 		t.Fatalf("spec = %+v", spec)
 	}

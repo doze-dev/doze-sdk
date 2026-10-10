@@ -14,9 +14,9 @@ import "context"
 // Optional capability interface, discovered by a type assertion like the
 // others. A module without it keeps working: the host shows the overview.
 type Console interface {
-	// Describe says what panels the console has. It is static per module
+	// DescribeConsole says what panels the console has. It is static per module
 	// version, and the host caches it.
-	Describe() ConsoleSpec
+	DescribeConsole() ConsoleSpec
 
 	// Tail streams rows for a stream panel until ctx ends. selector is the
 	// name of the row selected in the table panel the stream follows (the

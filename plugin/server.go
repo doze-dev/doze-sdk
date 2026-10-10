@@ -513,7 +513,7 @@ func (s *engineServer) DescribeConsole(context.Context, *proto.Empty) (*proto.Co
 	if !ok {
 		return nil, status.Error(codes.Unimplemented, "not a Console")
 	}
-	return consoleSpecToProto(c.Describe()), nil
+	return consoleSpecToProto(c.DescribeConsole()), nil
 }
 
 // Tail streams a panel's rows until the host hangs up or the module stops.
