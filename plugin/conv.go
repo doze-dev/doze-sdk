@@ -249,6 +249,31 @@ func consoleSpecToProto(s engine.ConsoleSpec) *proto.ConsoleSpec {
 		}
 		out.Panels = append(out.Panels, pp)
 	}
+	for _, t := range s.Tabs {
+		out.Tabs = append(out.Tabs, &proto.ConsoleTab{Id: t.ID, Title: t.Title, Body: nodeToProto(t.Body)})
+	}
+	for _, e := range s.Extend {
+		out.Extend = append(out.Extend, &proto.ConsoleExtension{After: e.After, Node: nodeToProto(e.Node)})
+	}
+	return out
+}
+
+func nodeToProto(n engine.Node) *proto.ConsoleNode {
+	out := &proto.ConsoleNode{Kind: n.Kind, Id: n.ID, Title: n.Title, Weight: int32(n.Weight), Panel: n.Panel, From: n.From, Text: n.Text, Actions: n.Actions}
+	for _, c := range n.Children {
+		out.Children = append(out.Children, nodeToProto(c))
+	}
+	return out
+}
+
+func nodeFromProto(n *proto.ConsoleNode) engine.Node {
+	if n == nil {
+		return engine.Node{}
+	}
+	out := engine.Node{Kind: n.Kind, ID: n.Id, Title: n.Title, Weight: int(n.Weight), Panel: n.Panel, From: n.From, Text: n.Text, Actions: n.Actions}
+	for _, c := range n.Children {
+		out.Children = append(out.Children, nodeFromProto(c))
+	}
 	return out
 }
 
@@ -263,6 +288,12 @@ func consoleSpecFromProto(s *proto.ConsoleSpec) engine.ConsoleSpec {
 			pp.Columns = append(pp.Columns, engine.Column{Key: c.Key, Title: c.Title, Align: c.Align, Role: c.Role})
 		}
 		out.Panels = append(out.Panels, pp)
+	}
+	for _, t := range s.Tabs {
+		out.Tabs = append(out.Tabs, engine.Tab{ID: t.Id, Title: t.Title, Body: nodeFromProto(t.Body)})
+	}
+	for _, e := range s.Extend {
+		out.Extend = append(out.Extend, engine.Extension{After: e.After, Node: nodeFromProto(e.Node)})
 	}
 	return out
 }

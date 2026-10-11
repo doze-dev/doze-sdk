@@ -32,7 +32,45 @@ type ConsoleSpec struct {
 	// WebURL is where the module serves a web console, as a template over the
 	// instance's address: "http://{address}/_console".
 	WebURL string
+	// Panels are the data the console draws: the tables, counters and streams.
 	Panels []Panel
+	// Tabs lay the panels out, as rows, columns and blocks. With no tabs the
+	// host lays the panels out itself: tables side by side, streams below.
+	Tabs []Tab
+	// Extend adds blocks to the generic screen of the instance, after a block of
+	// it. The layout is published with the module; nobody edits it afterwards.
+	Extend []Extension
+}
+
+// Tab is one tab of a console.
+type Tab struct {
+	ID, Title string
+	Body      Node
+}
+
+// Extension puts a block on the generic overview, after the block named: one
+// of "connect", "awake", "vitals" or "recent".
+type Extension struct {
+	After string
+	Node  Node
+}
+
+// Node is a container or a block of a layout. The containers are "row" and
+// "col" (children laid out by Weight); the blocks are "table", "stat",
+// "detail", "stream", "actions", "note" and "chart". A block draws the data of
+// Panel; a "detail" or a "stream" follows the selected row of the table block
+// named by From. A host that meets a kind it does not know draws a card in
+// its place and the rest of the layout as usual.
+type Node struct {
+	Kind     string
+	ID       string
+	Title    string
+	Weight   int
+	Panel    string
+	From     string
+	Text     string   // for a note
+	Actions  []string // for actions: which; none means all
+	Children []Node
 }
 
 // Panel is one block of the console.

@@ -178,6 +178,25 @@ message ConsolePanel {
   repeated ConsoleColumn columns = 5;
   string select = 6; // for a stream: the table panel whose selection it tails
 }
-message ConsoleSpec { string front = 1; string web_url = 2; repeated ConsolePanel panels = 3; }
+message ConsoleNode {
+  string kind = 1;
+  string id = 2;
+  string title = 3;
+  int32 weight = 4;
+  string panel = 5;
+  string from = 6;
+  string text = 7;
+  repeated string actions = 8;
+  repeated ConsoleNode children = 9;
+}
+message ConsoleTab { string id = 1; string title = 2; ConsoleNode body = 3; }
+message ConsoleExtension { string after = 1; ConsoleNode node = 2; }
+message ConsoleSpec {
+  string front = 1;
+  string web_url = 2;
+  repeated ConsolePanel panels = 3;
+  repeated ConsoleTab tabs = 4;
+  repeated ConsoleExtension extend = 5;
+}
 message ConsoleRow { map<string, string> cells = 1; string tone = 2; }
 message TailRequest { Instance instance = 1; Endpoint endpoint = 2; string panel = 3; string selector = 4; }
