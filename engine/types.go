@@ -125,6 +125,12 @@ type Instance struct {
 	Endpoint  Endpoint       // doze-owned client-facing endpoint(s)
 	Spec      EngineConfig   // engine-specific config (decoded by the driver)
 	Deps      map[string]Dep // resolved dependencies, keyed by instance name
+	// Toolchain is the engine's resolved toolchain, filled in when the host
+	// calls a method of a running instance that has to run its tools (Admin's
+	// Resources and Run, Console's Tail): a module reads its data with the same
+	// psql or mongosh it converged with, and needs no client of its own. Zero
+	// when the host has no toolchain to give, so check Toolchain.BinDir.
+	Toolchain Toolchain
 }
 
 // Condition is how "ready" a dependency must be before its dependent boots.

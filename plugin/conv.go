@@ -118,7 +118,7 @@ func instanceToProto(inst engine.Instance) (*proto.Instance, error) {
 		Name: inst.Name, Type: inst.Type, Version: inst.Version.String(),
 		DataDir: inst.DataDir, SocketDir: inst.SocketDir, Port: int32(inst.Port),
 		Endpoint: endpointToProto(inst.Endpoint), Spec: spec,
-		Deps: deps,
+		Deps: deps, Toolchain: toolchainToProto(inst.Toolchain),
 	}, nil
 }
 
@@ -138,7 +138,7 @@ func instanceFromProto(p *proto.Instance) (engine.Instance, error) {
 		Name: p.Name, Type: p.Type, Version: engine.VersionSpec(p.Version),
 		DataDir: p.DataDir, SocketDir: p.SocketDir, Port: int(p.Port),
 		Endpoint: endpointFromProto(p.Endpoint), Spec: spec,
-		Deps: deps,
+		Deps: deps, Toolchain: toolchainFromProto(p.Toolchain),
 	}, nil
 }
 

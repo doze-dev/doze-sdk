@@ -66,6 +66,7 @@ message Instance {
   Endpoint endpoint = 7;
   bytes spec = 8; // the plugin's own serialized config (opaque to core)
   map<string, Dep> deps = 9;
+  Toolchain toolchain = 10;
 }
 
 message Ready {

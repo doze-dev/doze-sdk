@@ -23,3 +23,24 @@ func TestAConsoleLayoutSurvivesTheWire(t *testing.T) {
 		t.Errorf("round trip changed the spec:\n in  %+v\n out %+v", in, out)
 	}
 }
+
+// A module's Admin methods get the toolchain on the instance they are handed,
+// so a postgres module can run the psql it converged with.
+func TestTheToolchainTravelsOnTheInstance(t *testing.T) {
+	in := engine.Instance{Name: "db", Type: "postgres",
+		Toolchain: engine.Toolchain{Engine: "postgres", Full: "17.2.0", BinDir: "/cache/postgres/17/bin", Tools: map[string]string{"psql": "/cache/psql"}}}
+	p, err := instanceToProto(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := instanceFromProto(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(in.Toolchain, out.Toolchain) {
+		t.Errorf("toolchain = %+v, want %+v", out.Toolchain, in.Toolchain)
+	}
+	if got := out.Toolchain.Path("psql"); got != "/cache/psql" {
+		t.Errorf("psql = %q", got)
+	}
+}
