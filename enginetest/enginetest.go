@@ -30,7 +30,6 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
 
-	"github.com/doze-dev/doze-sdk/binaries"
 	"github.com/doze-dev/doze-sdk/engine"
 )
 
@@ -91,7 +90,7 @@ func bootBody(t *testing.T, drv engine.Driver, opts Options, body hcl.Body) *Bac
 		}
 	}
 
-	plat, err := binaries.HostPlatform()
+	plat, err := engine.HostPlatform()
 	if err != nil {
 		t.Fatalf("host platform: %v", err)
 	}

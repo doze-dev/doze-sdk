@@ -33,7 +33,7 @@ import (
 
 	"github.com/doze-dev/doze-sdk/engine"
 	"github.com/doze-dev/doze-sdk/modindex"
-	dozeplugin "github.com/doze-dev/doze-sdk/plugin"
+	"github.com/doze-dev/doze-sdk/plugin/proto"
 )
 
 // Module describes one engine module to build and package.
@@ -264,7 +264,7 @@ func mergeIndex(path string, m Module, triple, archiveName, sha string, logf fun
 			return fmt.Errorf("%s %s (%s) is already published with a different sha256 — bump the module version instead of rebuilding it", m.Name, m.Version, triple)
 		}
 	}
-	rel.Protocol = dozeplugin.ProtocolVersion
+	rel.Protocol = proto.ProtocolVersion
 	rel.Engines = engineMajors(m.Driver.Describe())
 	if rel.Artifacts == nil {
 		rel.Artifacts = map[string]modindex.Artifact{}

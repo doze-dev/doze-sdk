@@ -9,7 +9,7 @@ import (
 
 	"github.com/doze-dev/doze-sdk/engine"
 	"github.com/doze-dev/doze-sdk/modindex"
-	dozeplugin "github.com/doze-dev/doze-sdk/plugin"
+	"github.com/doze-dev/doze-sdk/plugin/proto"
 )
 
 type fakeDescriber struct{}
@@ -61,7 +61,7 @@ func TestReleaseRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	rel := idx.Releases["0.1.0"]
-	if rel.Protocol != dozeplugin.ProtocolVersion || len(rel.Engines) != 2 || idx.Channels["stable"] != "0.1.0" {
+	if rel.Protocol != proto.ProtocolVersion || len(rel.Engines) != 2 || idx.Channels["stable"] != "0.1.0" {
 		t.Fatalf("bad release record: %+v channels=%v", rel, idx.Channels)
 	}
 	if idx.Namespace != "test" {
