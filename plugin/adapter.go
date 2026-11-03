@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	goplugin "github.com/hashicorp/go-plugin"
 	"github.com/zclconf/go-cty/cty"
 	"google.golang.org/grpc/status"
 
@@ -46,6 +47,7 @@ var (
 
 type pluginDriver struct {
 	client     proto.EngineClient
+	broker     *goplugin.GRPCBroker // serves the host's Fetcher during Resolve
 	engineType string
 	caps       map[string]bool
 	bootBudget time.Duration // from the handshake; 0 keeps the host's default
@@ -63,8 +65,8 @@ const maxBootBudget = time.Hour
 // newPluginDriver asks the module what it is and what it can do. A module that
 // can't answer either fails its launch: without its type every report would
 // name nobody, and without its capabilities every one would be silently off.
-func newPluginDriver(c proto.EngineClient) (engine.Driver, error) {
-	d := &pluginDriver{client: c, caps: map[string]bool{}}
+func newPluginDriver(c proto.EngineClient, broker *goplugin.GRPCBroker) (engine.Driver, error) {
+	d := &pluginDriver{client: c, broker: broker, caps: map[string]bool{}}
 	ctx := context.Background()
 	tr, err := c.Type(ctx, &proto.Empty{})
 	if err != nil {
@@ -262,7 +264,14 @@ func (d *pluginDriver) has(cap string) bool { return d.caps[cap] }
 // ── engine.Driver ────────────────────────────────────────────────────────────
 func (d *pluginDriver) Type() string { return d.engineType }
 
-func (d *pluginDriver) Resolve(ctx context.Context, spec engine.VersionSpec, plat engine.Platform, lk engine.Locker, _ engine.Fetcher) (engine.Toolchain, error) {
+func (d *pluginDriver) Resolve(ctx context.Context, spec engine.VersionSpec, plat engine.Platform, lk engine.Locker, fetch engine.Fetcher) (engine.Toolchain, error) {
+	// The module downloads through this host's Fetcher, served for the length
+	// of this call.
+	fid, stop, err := serveFetcher(d.broker, fetch)
+	if err != nil {
+		return engine.Toolchain{}, err
+	}
+	defer stop()
 	// Ship the whole lock so the plugin can read pins for every component binary
 	// it resolves (a composite pins several); fall back to just this engine's pin
 	// if the Locker can't enumerate.
@@ -273,7 +282,7 @@ func (d *pluginDriver) Resolve(ctx context.Context, spec engine.VersionSpec, pla
 		locked = []engine.LockEntry{{Engine: d.engineType, Spec: spec, Pin: pin}}
 	}
 	resp, err := d.client.Resolve(ctx, &proto.ResolveRequest{
-		Spec: string(spec), Platform: platformToProto(plat), Locked: lockEntriesToProto(locked),
+		Spec: string(spec), Platform: platformToProto(plat), Locked: lockEntriesToProto(locked), Fetcher: fid,
 	})
 	if err != nil {
 		return engine.Toolchain{}, err

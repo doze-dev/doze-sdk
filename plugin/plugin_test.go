@@ -167,3 +167,50 @@ func TestAModuleWithoutAConsoleHasAnEmptyOne(t *testing.T) {
 		t.Fatalf("a module that is not an admin module should not look like a console, got %T", h.Driver())
 	}
 }
+
+// hostFetcher is a host's engine.Fetcher that records what it was asked.
+type hostFetcher struct{ ensured []string }
+
+func (f *hostFetcher) ResolveMajor(engineType, major string) (string, error) {
+	return major + ".2.3", nil
+}
+
+func (f *hostFetcher) Ensure(_ context.Context, engineType, full string, _ engine.Platform, _ string) (string, string, error) {
+	f.ensured = append(f.ensured, engineType+" "+full)
+	return "/host/cache/" + engineType + "/" + full + "/bin", "sha256:00", nil
+}
+
+// A module's Resolve downloads through the host's Fetcher, across the broker:
+// the bin dir it returns is the host's cache, and the host saw the request.
+func TestResolveFetchesThroughTheHost(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "echo")
+	build := exec.Command("go", "build", "-o", bin, "./echo")
+	build.Stderr = os.Stderr
+	if err := build.Run(); err != nil {
+		t.Fatalf("building echo plugin: %v", err)
+	}
+	h, err := Launch(bin, nil)
+	if err != nil {
+		t.Fatalf("launch: %v", err)
+	}
+	defer h.Close()
+	f := &hostFetcher{}
+	tc, err := h.Driver().Resolve(context.Background(), "fetched", engine.Platform{OS: "linux", Arch: "amd64"}, noLock{}, f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tc.Full != "1.2.3" || tc.BinDir != "/host/cache/echo/1.2.3/bin" || len(f.ensured) != 1 {
+		t.Fatalf("toolchain %+v, host ensured %v", tc, f.ensured)
+	}
+	// Twice: each Resolve serves its own Fetcher and stops it after.
+	if _, err := h.Driver().Resolve(context.Background(), "fetched", engine.Platform{}, noLock{}, f); err != nil || len(f.ensured) != 2 {
+		t.Fatalf("second resolve: %v, ensured %v", err, f.ensured)
+	}
+}
+
+type noLock struct{}
+
+func (noLock) Get(string, engine.VersionSpec, engine.Platform) (engine.Pin, bool) {
+	return engine.Pin{}, false
+}
+func (noLock) Record(string, engine.VersionSpec, engine.Platform, engine.Pin) {}

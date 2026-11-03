@@ -45,12 +45,14 @@ type enginePlugin struct {
 }
 
 // GRPCServer registers the engine implementation (server side, in the plugin).
-func (p *enginePlugin) GRPCServer(_ *goplugin.GRPCBroker, s *grpc.Server) error {
-	proto.RegisterEngineServer(s, newEngineServer(p.impl))
+func (p *enginePlugin) GRPCServer(broker *goplugin.GRPCBroker, s *grpc.Server) error {
+	srv := newEngineServer(p.impl)
+	srv.broker = broker
+	proto.RegisterEngineServer(s, srv)
 	return nil
 }
 
 // GRPCClient returns the host-side adapter wrapping the gRPC client.
-func (p *enginePlugin) GRPCClient(_ context.Context, _ *goplugin.GRPCBroker, c *grpc.ClientConn) (any, error) {
-	return newPluginDriver(proto.NewEngineClient(c))
+func (p *enginePlugin) GRPCClient(_ context.Context, broker *goplugin.GRPCBroker, c *grpc.ClientConn) (any, error) {
+	return newPluginDriver(proto.NewEngineClient(c), broker)
 }

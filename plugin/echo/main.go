@@ -15,8 +15,20 @@ type driver struct{}
 
 func (driver) Type() string { return "echo" }
 
-func (driver) Resolve(context.Context, engine.VersionSpec, engine.Platform, engine.Locker, engine.Fetcher) (engine.Toolchain, error) {
-	return engine.Toolchain{Engine: "echo", Full: "builtin"}, nil
+func (driver) Resolve(ctx context.Context, spec engine.VersionSpec, plat engine.Platform, lk engine.Locker, fetch engine.Fetcher) (engine.Toolchain, error) {
+	if spec != "fetched" {
+		return engine.Toolchain{Engine: "echo", Full: "builtin"}, nil
+	}
+	// Download through the host, as a real module does via ResolveVia.
+	full, err := fetch.ResolveMajor("echo", "1")
+	if err != nil {
+		return engine.Toolchain{}, err
+	}
+	bin, _, err := fetch.Ensure(ctx, "echo", full, plat, "")
+	if err != nil {
+		return engine.Toolchain{}, err
+	}
+	return engine.Toolchain{Engine: "echo", Full: full, BinDir: bin}, nil
 }
 func (driver) Provision(context.Context, engine.Instance, engine.Toolchain) error { return nil }
 func (driver) Provisioned(string) bool                                            { return true }

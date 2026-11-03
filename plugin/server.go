@@ -4,16 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
+	goplugin "github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/doze-dev/doze-sdk/binaries"
 	"github.com/doze-dev/doze-sdk/engine"
 	"github.com/doze-dev/doze-sdk/plugin/proto"
 )
@@ -24,8 +22,9 @@ import (
 // the host only calls what the driver actually implements.
 type engineServer struct {
 	proto.UnimplementedEngineServer
-	drv  engine.Driver
-	wire *wireServer // non-nil when drv runs an out-of-process wire filter
+	drv    engine.Driver
+	broker *goplugin.GRPCBroker // reaches the host's Fetcher
+	wire   *wireServer          // non-nil when drv runs an out-of-process wire filter
 }
 
 func newEngineServer(drv engine.Driver) *engineServer {
@@ -239,7 +238,12 @@ func (s *engineServer) DecodeConfig(_ context.Context, req *proto.DecodeRequest)
 
 func (s *engineServer) Resolve(ctx context.Context, req *proto.ResolveRequest) (*proto.ResolveResponse, error) {
 	lk := newMapLocker(lockEntriesFromProto(req.Locked))
-	tc, err := s.drv.Resolve(ctx, engine.VersionSpec(req.Spec), platformFromProto(req.Platform), lk, binaries.NewManager(dozeHome()))
+	fetch, closeFetch, err := dialFetcher(ctx, s.broker, req.Fetcher)
+	if err != nil {
+		return nil, err
+	}
+	defer closeFetch()
+	tc, err := s.drv.Resolve(ctx, engine.VersionSpec(req.Spec), platformFromProto(req.Platform), lk, fetch)
 	if err != nil {
 		return nil, err
 	}
@@ -490,17 +494,6 @@ func contains(ss []string, s string) bool {
 		}
 	}
 	return false
-}
-
-// dozeHome is where the shared binary cache + lock live; a plugin fetches its
-// engine binary into the same place core's engines do. Inherited from the launching
-// daemon's environment.
-func dozeHome() string {
-	if h := os.Getenv("DOZE_HOME"); h != "" {
-		return h
-	}
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".doze")
 }
 
 // diagsText renders every diagnostic on its own line. hcl.Diagnostics.Error()

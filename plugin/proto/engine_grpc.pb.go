@@ -8,6 +8,7 @@ package proto
 
 import (
 	context "context"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -1127,5 +1128,151 @@ var Engine_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
+	Metadata: "engine.proto",
+}
+
+const (
+	Fetcher_ResolveMajor_FullMethodName = "/dozeplugin.v1.Fetcher/ResolveMajor"
+	Fetcher_Ensure_FullMethodName       = "/dozeplugin.v1.Fetcher/Ensure"
+)
+
+// FetcherClient is the client API for Fetcher service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Fetcher is served by the host, for the duration of one Resolve, on the
+// go-plugin broker id the ResolveRequest names. It is engine.Fetcher.
+type FetcherClient interface {
+	ResolveMajor(ctx context.Context, in *ResolveMajorRequest, opts ...grpc.CallOption) (*ResolveMajorResponse, error)
+	Ensure(ctx context.Context, in *EnsureRequest, opts ...grpc.CallOption) (*EnsureResponse, error)
+}
+
+type fetcherClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewFetcherClient(cc grpc.ClientConnInterface) FetcherClient {
+	return &fetcherClient{cc}
+}
+
+func (c *fetcherClient) ResolveMajor(ctx context.Context, in *ResolveMajorRequest, opts ...grpc.CallOption) (*ResolveMajorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResolveMajorResponse)
+	err := c.cc.Invoke(ctx, Fetcher_ResolveMajor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fetcherClient) Ensure(ctx context.Context, in *EnsureRequest, opts ...grpc.CallOption) (*EnsureResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnsureResponse)
+	err := c.cc.Invoke(ctx, Fetcher_Ensure_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// FetcherServer is the server API for Fetcher service.
+// All implementations must embed UnimplementedFetcherServer
+// for forward compatibility.
+//
+// Fetcher is served by the host, for the duration of one Resolve, on the
+// go-plugin broker id the ResolveRequest names. It is engine.Fetcher.
+type FetcherServer interface {
+	ResolveMajor(context.Context, *ResolveMajorRequest) (*ResolveMajorResponse, error)
+	Ensure(context.Context, *EnsureRequest) (*EnsureResponse, error)
+	mustEmbedUnimplementedFetcherServer()
+}
+
+// UnimplementedFetcherServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedFetcherServer struct{}
+
+func (UnimplementedFetcherServer) ResolveMajor(context.Context, *ResolveMajorRequest) (*ResolveMajorResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ResolveMajor not implemented")
+}
+func (UnimplementedFetcherServer) Ensure(context.Context, *EnsureRequest) (*EnsureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Ensure not implemented")
+}
+func (UnimplementedFetcherServer) mustEmbedUnimplementedFetcherServer() {}
+func (UnimplementedFetcherServer) testEmbeddedByValue()                 {}
+
+// UnsafeFetcherServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FetcherServer will
+// result in compilation errors.
+type UnsafeFetcherServer interface {
+	mustEmbedUnimplementedFetcherServer()
+}
+
+func RegisterFetcherServer(s grpc.ServiceRegistrar, srv FetcherServer) {
+	// If the following call panics, it indicates UnimplementedFetcherServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&Fetcher_ServiceDesc, srv)
+}
+
+func _Fetcher_ResolveMajor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResolveMajorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FetcherServer).ResolveMajor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Fetcher_ResolveMajor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FetcherServer).ResolveMajor(ctx, req.(*ResolveMajorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fetcher_Ensure_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnsureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FetcherServer).Ensure(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Fetcher_Ensure_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FetcherServer).Ensure(ctx, req.(*EnsureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Fetcher_ServiceDesc is the grpc.ServiceDesc for Fetcher service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Fetcher_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "dozeplugin.v1.Fetcher",
+	HandlerType: (*FetcherServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ResolveMajor",
+			Handler:    _Fetcher_ResolveMajor_Handler,
+		},
+		{
+			MethodName: "Ensure",
+			Handler:    _Fetcher_Ensure_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "engine.proto",
 }

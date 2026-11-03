@@ -120,7 +120,16 @@ message DecodeRequest {
 }
 message DecodeResponse { bytes spec = 1; } // the plugin's gob-encoded config
 
-message ResolveRequest { string spec = 1; Platform platform = 2; repeated LockEntry locked = 3; }
+message ResolveRequest {
+  string spec = 1;
+  Platform platform = 2;
+  repeated LockEntry locked = 3;
+  // The broker id of the host's Fetcher service: the plugin downloads engine
+  // binaries through the host, which owns the mirror, the cache and their
+  // checks. 0 from a host older than the split, which the plugin refuses
+  // with "upgrade doze".
+  uint32 fetcher = 4;
+}
 message ResolveResponse { Toolchain toolchain = 1; repeated LockEntry recorded = 2; }
 
 message ProvisionRequest { Instance instance = 1; Toolchain toolchain = 2; }
@@ -206,3 +215,14 @@ message ConsoleSpec {
 }
 message ConsoleRow { map<string, string> cells = 1; string tone = 2; }
 message TailRequest { Instance instance = 1; Endpoint endpoint = 2; string panel = 3; string selector = 4; }
+
+// Fetcher is served by the host, for the duration of one Resolve, on the
+// go-plugin broker id the ResolveRequest names. It is engine.Fetcher.
+service Fetcher {
+  rpc ResolveMajor(ResolveMajorRequest) returns (ResolveMajorResponse);
+  rpc Ensure(EnsureRequest) returns (EnsureResponse);
+}
+message ResolveMajorRequest { string engine = 1; string major = 2; }
+message ResolveMajorResponse { string full = 1; }
+message EnsureRequest { string engine = 1; string full = 2; Platform platform = 3; string expected_sha = 4; }
+message EnsureResponse { string bin_dir = 1; string digest = 2; }
