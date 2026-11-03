@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -214,3 +215,27 @@ func (noLock) Get(string, engine.VersionSpec, engine.Platform) (engine.Pin, bool
 	return engine.Pin{}, false
 }
 func (noLock) Record(string, engine.VersionSpec, engine.Platform, engine.Pin) {}
+
+// A host with no Fetcher to offer (a doze from before host fetching sends
+// none) only matters to a driver that downloads: one that doesn't resolves as
+// before, and one that does is told to upgrade doze, without gRPC framing.
+func TestResolveWithAnOldHost(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "echo")
+	build := exec.Command("go", "build", "-o", bin, "./echo")
+	build.Stderr = os.Stderr
+	if err := build.Run(); err != nil {
+		t.Fatalf("building echo plugin: %v", err)
+	}
+	h, err := Launch(bin, nil)
+	if err != nil {
+		t.Fatalf("launch: %v", err)
+	}
+	defer h.Close()
+	if tc, err := h.Driver().Resolve(context.Background(), "1", engine.Platform{}, noLock{}, nil); err != nil || tc.Full != "builtin" {
+		t.Fatalf("a driver that downloads nothing: %+v, %v", tc, err)
+	}
+	_, err = h.Driver().Resolve(context.Background(), "fetched", engine.Platform{}, noLock{}, nil)
+	if err == nil || !strings.Contains(err.Error(), "upgrade doze") || strings.Contains(err.Error(), "rpc error") {
+		t.Fatalf("a driver that downloads: %v", err)
+	}
+}

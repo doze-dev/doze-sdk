@@ -83,6 +83,9 @@ type LegacySpawner interface {
 // Fetcher resolves and downloads engine toolchains from the mirror. The
 // binaries package implements it; the runtime passes one to Driver.Resolve.
 // Defined here (not imported from binaries) to keep the dependency one-way.
+//
+// A Fetcher handed to Resolve is valid for that call only: a module's comes
+// from the host over the plugin connection and stops when Resolve returns.
 type Fetcher interface {
 	// ResolveMajor returns the full version the mirror maps a major to.
 	ResolveMajor(engineType, major string) (full string, err error)

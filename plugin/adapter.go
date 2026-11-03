@@ -285,7 +285,7 @@ func (d *pluginDriver) Resolve(ctx context.Context, spec engine.VersionSpec, pla
 		Spec: string(spec), Platform: platformToProto(plat), Locked: lockEntriesToProto(locked), Fetcher: fid,
 	})
 	if err != nil {
-		return engine.Toolchain{}, err
+		return engine.Toolchain{}, userError(err)
 	}
 	// Record each pin the plugin reported under its own (engine, spec) key, so a
 	// composite's components don't collapse into one and core's doze.lock is exact.

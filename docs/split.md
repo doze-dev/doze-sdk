@@ -39,10 +39,14 @@ service the host serves over go-plugin's broker:
 - The plugin server dials that id and passes the client to the driver's
   `Resolve`. Composite engines (ferret: documentdb and ferretdb) work
   unchanged: they call `Ensure` twice.
-- A host that sends no `fetcher` is a doze from before the split. The new
-  server answers it with "this doze is older than the module; upgrade doze".
-  Nothing is live yet (next-redesign D10/D14), so no fallback fetcher stays
-  in the SDK.
+- A host that sends no `fetcher` is a doze from before the split. The driver
+  then gets a Fetcher that answers every call with "this doze is older than
+  the module and can't download engine binaries for it: upgrade doze". So a
+  driver that downloads nothing (aws, kafka) works with any doze, and one
+  that downloads is told why. Nothing is live yet (next-redesign D10/D14), so
+  no fallback downloader stays in the SDK.
+- The Fetcher is valid for the Resolve it came with: the host stops serving
+  it when Resolve returns.
 
 Then the pieces move:
 
@@ -88,8 +92,11 @@ Recommended: keep `modindex` in the SDK, and move only selection policy
 ## Checks
 
 - An end-to-end test (`plugin/echo`): a plugin `Resolve` that calls `Ensure`
-  goes through the broker to a host fetcher, and the host's cache holds the
-  result.
+  goes through the broker to the host's Fetcher, and an old host is refused
+  only when a download is attempted.
+- By hand: postgres and ferret (composite) built against the new SDK boot
+  under doze, and the downloads land in doze's cache. The published postgres
+  0.2.4 (older SDK) still boots on the new host.
 - doze CI's integration suite boots postgres and ferret (composite) through
   the new path.
 - `go list -deps` test in doze-sdk: nothing in the kit imports a download or
