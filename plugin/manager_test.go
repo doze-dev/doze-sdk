@@ -67,4 +67,28 @@ func TestLaunchFailureIsKept(t *testing.T) {
 	if err := m.LaunchError("valkey"); err != nil {
 		t.Fatalf("an engine never launched has no error: %v", err)
 	}
+	if err := m.LaunchError("postgres"); !strings.Contains(err.Error(), "did not answer doze's plugin handshake") {
+		t.Errorf("a binary that is not a plugin should be named as such: %v", err)
+	}
+}
+
+// A module that is no longer installed has nothing to launch, so its old
+// launch error is dropped.
+func TestLaunchErrorClearsWhenTheModuleIsGone(t *testing.T) {
+	notAPlugin := filepath.Join(t.TempDir(), "broken")
+	if err := os.WriteFile(notAPlugin, []byte("#!/bin/sh\nexit 3\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	installed := true
+	m := NewManager(func(string) (string, []string, bool) { return notAPlugin, nil, installed })
+	defer m.Close()
+	m.Lookup("postgres")
+	if m.LaunchError("postgres") == nil {
+		t.Fatal("want a launch error first")
+	}
+	installed = false
+	m.Lookup("postgres")
+	if err := m.LaunchError("postgres"); err != nil {
+		t.Fatalf("an uninstalled module still reports %v", err)
+	}
 }

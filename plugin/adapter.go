@@ -57,18 +57,28 @@ type pluginDriver struct {
 	wireSock string // the plugin's fd-handoff socket, resolved once via WireAddr
 }
 
-func newPluginDriver(c proto.EngineClient) engine.Driver {
+// maxBootBudget caps the boot budget a module may ask for.
+const maxBootBudget = time.Hour
+
+// newPluginDriver asks the module what it is and what it can do. A module that
+// can't answer either fails its launch: without its type every report would
+// name nobody, and without its capabilities every one would be silently off.
+func newPluginDriver(c proto.EngineClient) (engine.Driver, error) {
 	d := &pluginDriver{client: c, caps: map[string]bool{}}
 	ctx := context.Background()
-	if resp, err := c.Type(ctx, &proto.Empty{}); err == nil {
-		d.engineType = resp.Type
+	tr, err := c.Type(ctx, &proto.Empty{})
+	if err != nil {
+		return nil, fmt.Errorf("asking the module its type: %w", userError(err))
 	}
-	if resp, err := c.Capabilities(ctx, &proto.Empty{}); err == nil {
-		for _, cp := range resp.Capabilities {
-			d.caps[cp] = true
-		}
-		d.bootBudget = time.Duration(resp.BootBudgetMs) * time.Millisecond
+	d.engineType = tr.Type
+	cr, err := c.Capabilities(ctx, &proto.Empty{})
+	if err != nil {
+		return nil, fmt.Errorf("asking the %s module what it can do: %w", d.engineType, userError(err))
 	}
+	for _, cp := range cr.Capabilities {
+		d.caps[cp] = true
+	}
+	d.bootBudget = min(time.Duration(cr.BootBudgetMs)*time.Millisecond, maxBootBudget)
 	// Versionless, Templater, Admin, and the convergence trio (Converger+Inventory+
 	// Pruner) change behaviour by interface *presence* (the runtime type-asserts for
 	// them), so they can't be no-op methods on the base driver — every plugin would
@@ -78,7 +88,7 @@ func newPluginDriver(c proto.EngineClient) engine.Driver {
 	// …) still resolve. The builtins (s3/sqs/sns) are versionless + admin + structural
 	// and postgres is templater + structural, so the combinations are real; compose
 	// them by embedding so each wrapper's method set is the union.
-	return wrapCaps(d)
+	return wrapCaps(d), nil
 }
 
 // BootBudget implements engine.SlowBooter with the budget the module reported.
@@ -437,6 +447,7 @@ func (d *pluginDriver) objects(inst engine.Instance) []engine.Object {
 	}
 	resp, err := d.client.Objects(context.Background(), &proto.ObjectsRequest{Instance: pi})
 	if err != nil {
+		d.report("Objects", err)
 		return nil
 	}
 	return objectsFromProto(resp.Objects)
@@ -461,6 +472,7 @@ func (d *pluginDriver) BackendURL(inst engine.Instance) string {
 	}
 	resp, err := d.client.BackendURL(context.Background(), &proto.BackendURLRequest{Instance: pi})
 	if err != nil {
+		d.report("BackendURL", err)
 		return ""
 	}
 	return resp.Url
@@ -475,7 +487,11 @@ func (d *pluginDriver) Supervised(inst engine.Instance) bool {
 		return false
 	}
 	resp, err := d.client.Supervised(context.Background(), &proto.SupervisedRequest{Instance: pi})
-	return err == nil && resp.Supervised
+	if err != nil {
+		d.report("Supervised", err)
+		return false
+	}
+	return resp.Supervised
 }
 
 func (d *pluginDriver) PreStart(ctx context.Context, inst engine.Instance) error {
@@ -521,6 +537,7 @@ func (d *pluginDriver) RestartPolicy(inst engine.Instance) engine.RestartSpec {
 	}
 	resp, err := d.client.RestartPolicy(context.Background(), &proto.RestartPolicyRequest{Instance: pi})
 	if err != nil {
+		d.report("RestartPolicy", err)
 		return engine.RestartSpec{Policy: engine.RestartNo}
 	}
 	return restartFromProto(resp)
@@ -536,6 +553,7 @@ func (d *pluginDriver) AdvertisedAddr(inst engine.Instance) (string, bool) {
 	}
 	resp, err := d.client.AdvertisedAddr(context.Background(), &proto.AddrRequest{Instance: pi})
 	if err != nil {
+		d.report("AdvertisedAddr", err)
 		return "", false
 	}
 	return resp.Addr, resp.Ok
@@ -559,6 +577,7 @@ func (d *pluginDriver) describeConsole() engine.ConsoleSpec {
 		}
 		resp, err := d.client.DescribeConsole(context.Background(), &proto.Empty{})
 		if err != nil {
+			d.report("DescribeConsole", err)
 			return
 		}
 		d.console = consoleSpecFromProto(resp)

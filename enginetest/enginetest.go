@@ -430,15 +430,17 @@ func (errFetcher) Ensure(context.Context, string, string, engine.Platform, strin
 	return "", "", fmt.Errorf("enginetest: no network fetch — set DOZE_<ENGINE>_BINDIR")
 }
 
-// coreSchema is the set of block fields owned by doze core, stripped before a
-// driver decodes its body — the same set core's config loader (and the plugin
-// server) removes, plus after and sleep, which core blanks before a plugin
-// sees the block. Examples in Describe() include them (users copy examples
-// into doze.hcl verbatim), so BootExample strips them here.
-var coreSchema = &hcl.BodySchema{Attributes: []hcl.AttributeSchema{
-	{Name: "count"}, {Name: "for_each"}, {Name: "depends_on"}, {Name: "enabled"},
-	{Name: "version"}, {Name: "listen"}, {Name: "port"}, {Name: "after"}, {Name: "sleep"},
-}}
+// coreSchema is the set of block fields owned by doze core
+// (engine.CoreArguments), stripped before a driver decodes its body. Examples
+// in Describe() include them (users copy examples into doze.hcl verbatim), so
+// BootExample strips them here.
+var coreSchema = func() *hcl.BodySchema {
+	s := &hcl.BodySchema{}
+	for _, name := range engine.CoreArguments {
+		s.Attributes = append(s.Attributes, hcl.AttributeSchema{Name: name})
+	}
+	return s
+}()
 
 // BootExample boots a backend from the driver's own Describe().Example — the
 // first config every user sees, copied verbatim into their doze.hcl. Acceptance

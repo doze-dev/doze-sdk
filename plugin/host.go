@@ -57,6 +57,9 @@ func Launch(path string, env []string) (*Host, error) {
 		if strings.Contains(err.Error(), "Incompatible API version") {
 			return nil, &ProtocolMismatchError{Path: path, Host: ProtocolVersion, Err: err}
 		}
+		if strings.Contains(err.Error(), "Unrecognized remote plugin message") {
+			return nil, fmt.Errorf("%s did not answer doze's plugin handshake: it may be built for another OS or architecture, be missing libraries, or not be a doze module", path)
+		}
 		return nil, fmt.Errorf("connecting to plugin %s: %w", path, err)
 	}
 	raw, err := rpc.Dispense(pluginKey)

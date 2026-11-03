@@ -161,14 +161,18 @@ func (s *engineServer) RunAction(ctx context.Context, req *proto.RunActionReques
 	return &proto.RunActionResponse{Result: out}, nil
 }
 
-// stripSchema removes the fields core consumes before an engine sees its body: the
-// meta-args (count/for_each/depends_on/enabled) and the common fields
-// (version/listen/port). The engine-specific remainder is what the driver decodes —
-// identical to in-tree.
-var stripSchema = &hcl.BodySchema{Attributes: []hcl.AttributeSchema{
-	{Name: "count"}, {Name: "for_each"}, {Name: "depends_on"}, {Name: "enabled"},
-	{Name: "version"}, {Name: "listen"}, {Name: "port"},
-}}
+// stripSchema removes the fields core consumes (engine.CoreArguments) before an
+// engine sees its body. The engine-specific remainder is what the driver
+// decodes — identical to in-tree.
+var stripSchema = coreSchema()
+
+func coreSchema() *hcl.BodySchema {
+	s := &hcl.BodySchema{}
+	for _, name := range engine.CoreArguments {
+		s.Attributes = append(s.Attributes, hcl.AttributeSchema{Name: name})
+	}
+	return s
+}
 
 // DecodeConfig re-parses the source file the plugin's block came from, isolates the
 // block by type+label, strips the fields core owns, reconstructs the eval context

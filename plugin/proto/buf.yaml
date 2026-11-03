@@ -6,6 +6,11 @@ modules:
 breaking:
   use:
     - WIRE_JSON
+    # WIRE_JSON alone allows removing an RPC, and an old host calling it would
+    # get Unimplemented. Nothing is ever removed.
+    - RPC_NO_DELETE
+    - SERVICE_NO_DELETE
+    - PACKAGE_NO_DELETE
 lint:
   use:
     - MINIMAL

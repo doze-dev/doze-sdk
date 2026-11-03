@@ -24,14 +24,18 @@ keep old modules working with new doze, and new modules working with old doze.
      doesn't implement one never advertises it.
    - This is how the protocol grows without a version bump.
 4. **A failure is an error, never a silent default.**
-   - An advertised capability whose RPC fails is reported with the module's
-     name and the capability.
+   - An advertised capability whose RPC fails is an error naming the module,
+     or, where the Go interface has no error to return, goes to the host's
+     `Reporter` with the module's name and the call.
+   - A module that can't say its type or capabilities fails its launch.
    - A missing capability is the only "it does nothing" case.
 5. **The version number moves only for a change rules 1–3 cannot express.**
    - `ProtocolVersion` (plugin.go) and the package name `dozeplugin.v1` change
      together, and only together.
-   - A host offers every version it supports, and a module built with a newer
-     SDK serves the older one too, so a bump never strands published modules.
+   - Before the first bump, the handshake learns to offer several versions
+     (go-plugin's `VersionedPlugins`): a host offers every version it supports,
+     and a module built with a newer SDK serves the older one too, so a bump
+     never strands published modules. Today there is one version, 1.
    - The previous version stays supported for at least two doze minor releases
      or six months, whichever is longer.
 

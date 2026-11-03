@@ -51,10 +51,12 @@ jobs:
       - name: No breaking change since the last release
         working-directory: plugin/proto
         run: |
-          last=$(git describe --tags --abbrev=0 --match "v*" HEAD^ 2>/dev/null || git describe --tags --abbrev=0 --match "v*")
+          last=$(git describe --tags --abbrev=0 --match "v*" HEAD^ 2>/dev/null || true)
+          if [ -z "$last" ]; then echo "no release to compare with"; exit 0; fi
           echo "against $last"
           buf breaking --against "../../.git#ref=$last,subdir=plugin/proto"
       - name: Generated code matches engine.proto
         run: |
           go generate ./plugin/proto
           git diff --exit-code -- plugin/proto
+          test -z "$(git status --porcelain -- plugin/proto)"

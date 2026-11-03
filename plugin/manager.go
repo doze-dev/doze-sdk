@@ -70,6 +70,9 @@ func NewManager(resolve Resolver) *Manager {
 func (m *Manager) Driver(engineType string) (drv engine.Driver, found bool, err error) {
 	path, env, ok := m.resolve(engineType)
 	if !ok {
+		m.mu.Lock()
+		delete(m.failed, engineType) // nothing to launch now, so nothing failed
+		m.mu.Unlock()
 		return nil, false, nil
 	}
 	m.mu.Lock()
@@ -93,12 +96,11 @@ func (m *Manager) Driver(engineType string) (drv engine.Driver, found bool, err 
 }
 
 // Lookup adapts Driver to engine.SetPluginResolver's signature: a launch failure
-// is surfaced (to stderr) and reported as "not a plugin" so the caller falls back
-// to any in-tree registration rather than hanging.
+// reads as "not a plugin", so the caller falls back to any in-tree
+// registration, and the reason is kept for LaunchError, which the host shows.
 func (m *Manager) Lookup(engineType string) (engine.Driver, bool) {
 	drv, found, err := m.Driver(engineType)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "doze: %v\n", err)
 		return nil, false
 	}
 	return drv, found

@@ -52,5 +52,5 @@ func (p *enginePlugin) GRPCServer(_ *goplugin.GRPCBroker, s *grpc.Server) error 
 
 // GRPCClient returns the host-side adapter wrapping the gRPC client.
 func (p *enginePlugin) GRPCClient(_ context.Context, _ *goplugin.GRPCBroker, c *grpc.ClientConn) (any, error) {
-	return newPluginDriver(proto.NewEngineClient(c)), nil
+	return newPluginDriver(proto.NewEngineClient(c))
 }
