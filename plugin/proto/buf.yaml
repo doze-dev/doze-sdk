@@ -1,0 +1,15 @@
+# The plugin protocol: the one contract between doze and its modules.
+# PROTOCOL.md says how it may change; `buf breaking` checks it in CI.
+version: v2
+modules:
+  - path: .
+breaking:
+  use:
+    - WIRE_JSON
+lint:
+  use:
+    - MINIMAL
+  except:
+    # The file sits beside its generated Go package, not under dozeplugin/v1;
+    # moving it would move the import path every module uses.
+    - PACKAGE_DIRECTORY_MATCH

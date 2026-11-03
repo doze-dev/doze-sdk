@@ -1,0 +1,12 @@
+# Regenerate with: go generate ./plugin/proto (needs buf, and the two generators
+# below on PATH at exactly these versions so the output does not drift).
+#   go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+#   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2
+version: v2
+plugins:
+  - local: protoc-gen-go
+    out: .
+    opt: paths=source_relative
+  - local: protoc-gen-go-grpc
+    out: .
+    opt: paths=source_relative
