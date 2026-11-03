@@ -112,7 +112,11 @@ func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.Capab
 	add(ad, capAdmin)
 	_, cs := s.drv.(engine.Console)
 	add(cs, capConsole)
-	return &proto.CapabilitiesResponse{Capabilities: caps}, nil
+	resp := &proto.CapabilitiesResponse{Capabilities: caps}
+	if sb, ok := s.drv.(engine.SlowBooter); ok {
+		resp.BootBudgetMs = sb.BootBudget().Milliseconds()
+	}
+	return resp, nil
 }
 
 // ── CAP_ADMIN handlers ───────────────────────────────────────────────────────

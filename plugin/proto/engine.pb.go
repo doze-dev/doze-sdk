@@ -955,8 +955,11 @@ func (x *TypeResponse) GetType() string {
 }
 
 type CapabilitiesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Capabilities  []string               `protobuf:"bytes,1,rep,name=capabilities,proto3" json:"capabilities,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Capabilities []string               `protobuf:"bytes,1,rep,name=capabilities,proto3" json:"capabilities,omitempty"`
+	// boot_budget_ms is how long a cold boot may take (engine.SlowBooter), or 0
+	// for the host's default. A plugin built before this field sends 0.
+	BootBudgetMs  int64 `protobuf:"varint,2,opt,name=boot_budget_ms,json=bootBudgetMs,proto3" json:"boot_budget_ms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -996,6 +999,13 @@ func (x *CapabilitiesResponse) GetCapabilities() []string {
 		return x.Capabilities
 	}
 	return nil
+}
+
+func (x *CapabilitiesResponse) GetBootBudgetMs() int64 {
+	if x != nil {
+		return x.BootBudgetMs
+	}
+	return 0
 }
 
 type DecodeRequest struct {
@@ -3585,9 +3595,10 @@ const file_engine_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
 	"\x04hash\x18\x03 \x01(\tR\x04hash\"\"\n" +
 	"\fTypeResponse\x12\x12\n" +
-	"\x04type\x18\x01 \x01(\tR\x04type\":\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\"`\n" +
 	"\x14CapabilitiesResponse\x12\"\n" +
-	"\fcapabilities\x18\x01 \x03(\tR\fcapabilities\"\xca\x02\n" +
+	"\fcapabilities\x18\x01 \x03(\tR\fcapabilities\x12$\n" +
+	"\x0eboot_budget_ms\x18\x02 \x01(\x03R\fbootBudgetMs\"\xca\x02\n" +
 	"\rDecodeRequest\x12\x12\n" +
 	"\x04file\x18\x01 \x01(\fR\x04file\x12\x1d\n" +
 	"\n" +

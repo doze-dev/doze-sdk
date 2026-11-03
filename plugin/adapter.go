@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	"github.com/zclconf/go-cty/cty"
 	"google.golang.org/grpc/status"
@@ -38,12 +39,16 @@ var _ engine.RemoteDecoder = (*pluginDriver)(nil)
 var (
 	_ engine.Driver  = (*pluginDriver)(nil)
 	_ engine.Spawner = (*pluginDriver)(nil)
+	// SlowBooter carries the module's boot budget across the wire. A budget of
+	// 0 is no extension: the host keeps its default.
+	_ engine.SlowBooter = (*pluginDriver)(nil)
 )
 
 type pluginDriver struct {
 	client     proto.EngineClient
 	engineType string
 	caps       map[string]bool
+	bootBudget time.Duration // from the handshake; 0 keeps the host's default
 
 	consoleOnce sync.Once
 	console     engine.ConsoleSpec
@@ -62,6 +67,7 @@ func newPluginDriver(c proto.EngineClient) engine.Driver {
 		for _, cp := range resp.Capabilities {
 			d.caps[cp] = true
 		}
+		d.bootBudget = time.Duration(resp.BootBudgetMs) * time.Millisecond
 	}
 	// Versionless, Templater, Admin, and the convergence trio (Converger+Inventory+
 	// Pruner) change behaviour by interface *presence* (the runtime type-asserts for
@@ -74,6 +80,9 @@ func newPluginDriver(c proto.EngineClient) engine.Driver {
 	// them by embedding so each wrapper's method set is the union.
 	return wrapCaps(d)
 }
+
+// BootBudget implements engine.SlowBooter with the budget the module reported.
+func (d *pluginDriver) BootBudget() time.Duration { return d.bootBudget }
 
 // wrapCaps returns d decorated with exactly the presence-discovered capabilities it
 // advertised. The convergence trio is keyed on capConverger and added as a unit
@@ -278,12 +287,17 @@ func (d *pluginDriver) Provision(ctx context.Context, inst engine.Instance, tc e
 
 func (d *pluginDriver) Provisioned(dataDir string) bool {
 	resp, err := d.client.Provisioned(context.Background(), &proto.ProvisionedRequest{DataDir: dataDir})
-	return err == nil && resp.Provisioned
+	if err != nil {
+		d.report("Provisioned", err)
+		return false
+	}
+	return resp.Provisioned
 }
 
 func (d *pluginDriver) BackendSocket(socketDir string, port int) string {
 	resp, err := d.client.BackendSocket(context.Background(), &proto.BackendSocketRequest{SocketDir: socketDir, Port: int32(port)})
 	if err != nil {
+		d.report("BackendSocket", err)
 		return ""
 	}
 	return resp.Path
@@ -292,10 +306,12 @@ func (d *pluginDriver) BackendSocket(socketDir string, port int) string {
 func (d *pluginDriver) ConnString(inst engine.Instance, ep engine.Endpoint) (string, string) {
 	pi, err := instanceToProto(inst)
 	if err != nil {
+		d.report("ConnString", err)
 		return "", ""
 	}
 	resp, err := d.client.ConnString(context.Background(), &proto.ConnStringRequest{Instance: pi, Endpoint: endpointToProto(ep)})
 	if err != nil {
+		d.report("ConnString", err)
 		return "", ""
 	}
 	return resp.EnvVar, resp.Url
@@ -362,6 +378,7 @@ func (d *pluginDriver) converge(ctx context.Context, inst engine.Instance, tc en
 func (d *pluginDriver) actions() []engine.Action {
 	resp, err := d.client.Actions(context.Background(), &proto.Empty{})
 	if err != nil {
+		d.report("Actions", err)
 		return nil
 	}
 	return actionsFromProto(resp.Actions)
@@ -397,14 +414,17 @@ func (d *pluginDriver) Attributes(inst engine.Instance, ep engine.Endpoint) map[
 	}
 	pi, err := instanceToProto(inst)
 	if err != nil {
+		d.report("Attributes", err)
 		return nil
 	}
 	resp, err := d.client.Attributes(context.Background(), &proto.AttributesRequest{Instance: pi, Endpoint: endpointToProto(ep)})
 	if err != nil {
+		d.report("Attributes", err)
 		return nil
 	}
 	attrs, err := varsFromJSON(resp.Attrs)
 	if err != nil {
+		d.report("Attributes", err)
 		return nil
 	}
 	return attrs

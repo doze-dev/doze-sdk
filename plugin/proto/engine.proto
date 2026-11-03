@@ -95,7 +95,12 @@ message Object { string kind = 1; string name = 2; string hash = 3; }
 
 // ── requests / responses ─────────────────────────────────────────────────────
 message TypeResponse { string type = 1; }
-message CapabilitiesResponse { repeated string capabilities = 1; }
+message CapabilitiesResponse {
+  repeated string capabilities = 1;
+  // boot_budget_ms is how long a cold boot may take (engine.SlowBooter), or 0
+  // for the host's default. A plugin built before this field sends 0.
+  int64 boot_budget_ms = 2;
+}
 
 message DecodeRequest {
   bytes file = 1;                       // the full source file declaring the block

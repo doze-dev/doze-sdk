@@ -54,11 +54,14 @@ type Manager struct {
 	resolve Resolver
 	mu      sync.Mutex
 	hosts   map[string]*Host
+	// failed is each engine type's last launch failure, kept so the caller can
+	// say why a module did not load instead of only that it did not.
+	failed map[string]error
 }
 
 // NewManager builds a Manager backed by resolve.
 func NewManager(resolve Resolver) *Manager {
-	return &Manager{resolve: resolve, hosts: map[string]*Host{}}
+	return &Manager{resolve: resolve, hosts: map[string]*Host{}, failed: map[string]error{}}
 }
 
 // Driver returns the warm plugin driver for engineType, launching it if needed.
@@ -80,8 +83,11 @@ func (m *Manager) Driver(engineType string) (drv engine.Driver, found bool, err 
 	}
 	h, err := Launch(path, env)
 	if err != nil {
-		return nil, true, fmt.Errorf("launching %s plugin: %w", engineType, err)
+		err = fmt.Errorf("launching %s plugin: %w", engineType, err)
+		m.failed[engineType] = err
+		return nil, true, err
 	}
+	delete(m.failed, engineType)
 	m.hosts[engineType] = h
 	return h.Driver(), true, nil
 }
@@ -96,6 +102,15 @@ func (m *Manager) Lookup(engineType string) (engine.Driver, bool) {
 		return nil, false
 	}
 	return drv, found
+}
+
+// LaunchError is why engineType's plugin last failed to launch, or nil. Lookup
+// can only say "not found"; this is the reason, for the message the user sees
+// (an incompatible protocol, a binary that will not start).
+func (m *Manager) LaunchError(engineType string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.failed[engineType]
 }
 
 // Close reaps every launched plugin.

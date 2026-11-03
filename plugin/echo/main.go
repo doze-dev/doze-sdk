@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/doze-dev/doze-sdk/engine"
 	dozeplugin "github.com/doze-dev/doze-sdk/plugin"
@@ -30,6 +31,10 @@ func (driver) Plan(_ context.Context, inst engine.Instance, _ engine.Toolchain) 
 		Name: inst.Name, Bin: "sh", Args: []string{"-c", "echo hello && sleep 3600"},
 	}}}, nil
 }
+
+// BootBudget implements engine.SlowBooter, so the round trip proves a module's
+// boot budget reaches the host.
+func (driver) BootBudget() time.Duration { return 2 * time.Minute }
 
 // Supervised implements engine.Lifecycle.
 func (driver) Supervised(engine.Instance) bool { return true }

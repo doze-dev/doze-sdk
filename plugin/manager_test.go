@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -45,5 +46,25 @@ func TestManager(t *testing.T) {
 	// A compiled-in engine is not found (caller falls back to the in-tree registry).
 	if _, found, _ := m.Driver("postgres"); found {
 		t.Fatal("postgres should not resolve to a plugin")
+	}
+}
+
+// A plugin that will not launch is "not found" to Lookup, but the reason is
+// kept, so the user is told why rather than that the module does not exist.
+func TestLaunchFailureIsKept(t *testing.T) {
+	notAPlugin := filepath.Join(t.TempDir(), "broken")
+	if err := os.WriteFile(notAPlugin, []byte("#!/bin/sh\nexit 3\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	m := NewManager(func(string) (string, []string, bool) { return notAPlugin, nil, true })
+	defer m.Close()
+	if _, ok := m.Lookup("postgres"); ok {
+		t.Fatal("a plugin that exits at once must not be found")
+	}
+	if err := m.LaunchError("postgres"); err == nil || !strings.Contains(err.Error(), "launching postgres plugin") {
+		t.Fatalf("LaunchError = %v", err)
+	}
+	if err := m.LaunchError("valkey"); err != nil {
+		t.Fatalf("an engine never launched has no error: %v", err)
 	}
 }

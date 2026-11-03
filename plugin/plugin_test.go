@@ -49,6 +49,12 @@ func TestEchoRoundTrip(t *testing.T) {
 		t.Fatalf("plan = %+v", plan)
 	}
 
+	// The module's boot budget crosses the handshake (ferret's 3 minutes was
+	// lost here before).
+	if sb, ok := drv.(engine.SlowBooter); !ok || sb.BootBudget() != 2*time.Minute {
+		t.Fatalf("BootBudget did not cross the wire: %v", drv)
+	}
+
 	// An advertised capability dispatches; an unadvertised one safely no-ops.
 	if lc, ok := drv.(engine.Lifecycle); !ok || !lc.Supervised(engine.Instance{Name: "e1"}) {
 		t.Fatal("expected the echo plugin to advertise Supervised=true")
