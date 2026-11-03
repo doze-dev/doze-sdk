@@ -432,11 +432,12 @@ func (errFetcher) Ensure(context.Context, string, string, engine.Platform, strin
 
 // coreSchema is the set of block fields owned by doze core, stripped before a
 // driver decodes its body — the same set core's config loader (and the plugin
-// server) removes. Examples in Describe() include them (users copy examples
+// server) removes, plus after and sleep, which core blanks before a plugin
+// sees the block. Examples in Describe() include them (users copy examples
 // into doze.hcl verbatim), so BootExample strips them here.
 var coreSchema = &hcl.BodySchema{Attributes: []hcl.AttributeSchema{
 	{Name: "count"}, {Name: "for_each"}, {Name: "depends_on"}, {Name: "enabled"},
-	{Name: "version"}, {Name: "listen"}, {Name: "port"},
+	{Name: "version"}, {Name: "listen"}, {Name: "port"}, {Name: "after"}, {Name: "sleep"},
 }}
 
 // BootExample boots a backend from the driver's own Describe().Example — the
