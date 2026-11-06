@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"sort"
+
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
 )
@@ -23,7 +25,24 @@ import (
 // line. Flattening it into a string (fmt.Errorf with %s) loses them.
 func DecodeStrict(body hcl.Body, ctx *hcl.EvalContext, target any) error {
 	if d := gohcl.DecodeBody(body, ctx, target); d.HasErrors() {
-		return d
+		return InSourceOrder(d)
 	}
 	return nil
+}
+
+// InSourceOrder sorts diagnostics by where they point: gohcl reports
+// unexpected arguments in map order, so two mistakes would otherwise swap
+// places from one run to the next.
+func InSourceOrder(d hcl.Diagnostics) hcl.Diagnostics {
+	sort.SliceStable(d, func(i, j int) bool {
+		a, b := d[i].Subject, d[j].Subject
+		if a == nil || b == nil {
+			return a != nil
+		}
+		if a.Filename != b.Filename {
+			return a.Filename < b.Filename
+		}
+		return a.Start.Byte < b.Start.Byte
+	})
+	return d
 }

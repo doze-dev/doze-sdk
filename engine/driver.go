@@ -238,12 +238,12 @@ type Describer interface {
 // Description is the published catalog metadata for one engine module. Fields map
 // onto the registry's meta.yaml shape.
 type Description struct {
-	Title        string      // human name, e.g. "PostgreSQL"
-	Tagline      string      // one-line summary
-	Category     string      // e.g. "database", "cache", "queue", "workflow"
-	Description  string      // a paragraph
-	Port         int         // the conventional/default client port
-	Versions     []string    // selectable version labels, e.g. ["16","17","18"]
+	Title        string        // human name, e.g. "PostgreSQL"
+	Tagline      string        // one-line summary
+	Category     string        // e.g. "database", "cache", "queue", "workflow"
+	Description  string        // a paragraph
+	Port         int           // the conventional/default client port
+	Versions     []string      // selectable version labels, e.g. ["16","17","18"]
 	Example      string        // a complete HCL block example
 	ExampleLabel string        // the instance label used in Example
 	Config       []ConfigArg   // one per top-level HCL argument the block accepts

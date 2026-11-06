@@ -227,6 +227,7 @@ func (s *engineServer) DecodeConfig(_ context.Context, req *proto.DecodeRequest)
 		// The message is a flat string, so expand them all here.
 		var dd hcl.Diagnostics
 		if errors.As(err, &dd) {
+			dd = engine.InSourceOrder(dd)
 			return nil, decodeFailure(diagsText(dd), dd)
 		}
 		// An error the driver could not place belongs to the block.
