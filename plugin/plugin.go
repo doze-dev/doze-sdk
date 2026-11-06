@@ -27,6 +27,21 @@ var Handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: "engine",
 }
 
+// Protocols are the plugin protocols this SDK speaks, oldest first. The
+// handshake offers them all (go-plugin's VersionedPlugins): a host and a
+// module agree on the newest both know, so a protocol bump never strands a
+// published module or an older doze (PROTOCOL.md rule 5). Today: 1.
+var Protocols = []int{ProtocolVersion}
+
+// versionedSet is pluginSet for every protocol this SDK speaks.
+func versionedSet(drv engine.Driver) map[int]goplugin.PluginSet {
+	out := map[int]goplugin.PluginSet{}
+	for _, v := range Protocols {
+		out[v] = pluginSet(drv)
+	}
+	return out
+}
+
 // pluginKey is the dispensed plugin name.
 const pluginKey = "engine"
 

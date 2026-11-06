@@ -32,10 +32,12 @@ keep old modules working with new doze, and new modules working with old doze.
 5. **The version number moves only for a change rules 1–3 cannot express.**
    - `ProtocolVersion` (plugin.go) and the package name `dozeplugin.v1` change
      together, and only together.
-   - Before the first bump, the handshake learns to offer several versions
-     (go-plugin's `VersionedPlugins`): a host offers every version it supports,
-     and a module built with a newer SDK serves the older one too, so a bump
-     never strands published modules. Today there is one version, 1.
+   - The handshake offers several versions (go-plugin's `VersionedPlugins`,
+     `plugin.Protocols`): a host offers every version it supports, a module
+     built with a newer SDK serves the older one too, and they agree on the
+     newest both know, so a bump never strands published modules. A module
+     built before this (it offers only its own version) still handshakes with
+     a host that lists that version. Today there is one version, 1.
    - The previous version stays supported for at least two doze minor releases
      or six months, whichever is longer.
 

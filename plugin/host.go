@@ -44,7 +44,7 @@ func Launch(path string, env []string) (*Host, error) {
 	}
 	client := goplugin.NewClient(&goplugin.ClientConfig{
 		HandshakeConfig:  Handshake,
-		Plugins:          pluginSet(nil),
+		VersionedPlugins: versionedSet(nil),
 		Cmd:              cmd,
 		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
 		Logger:           hclog.NewNullLogger(),

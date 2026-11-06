@@ -33,8 +33,8 @@ func Serve(drv engine.Driver) {
 		return
 	}
 	goplugin.Serve(&goplugin.ServeConfig{
-		HandshakeConfig: Handshake,
-		Plugins:         pluginSet(drv),
-		GRPCServer:      goplugin.DefaultGRPCServer,
+		HandshakeConfig:  Handshake,
+		VersionedPlugins: versionedSet(drv),
+		GRPCServer:       goplugin.DefaultGRPCServer,
 	})
 }
