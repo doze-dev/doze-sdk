@@ -210,3 +210,27 @@ func TestCompareVersions(t *testing.T) {
 		t.Fatal("equal versions must compare 0")
 	}
 }
+
+// An older doze gets the newest release it can run; when none fits, it is
+// told which doze to get. A development build runs every release.
+func TestSelectForSkipsWhatThisDozeCannotRun(t *testing.T) {
+	idx := &Index{Schema: Schema, Module: "postgres", Releases: map[string]Release{
+		"0.2.4": {Protocol: 1, Engines: []string{"16", "17", "18"}},
+		"0.2.5": {Protocol: 1, Engines: []string{"16", "17", "18"}, Doze: "0.2.0"},
+		"0.3.0": {Protocol: 1, Engines: []string{"17", "18", "19"}, Doze: "0.3.0"},
+	}, Channels: map[string]string{"stable": "0.3.0"}}
+	if v, _, err := SelectFor(idx, Host{Protocol: 1, Doze: "0.1.1"}, []string{"18"}, ""); err != nil || v != "0.2.4" {
+		t.Errorf("0.1.1 for 18: %s %v", v, err)
+	}
+	if v, _, err := SelectFor(idx, Host{Protocol: 1, Doze: "0.2.3"}, []string{"18"}, ""); err != nil || v != "0.2.5" {
+		t.Errorf("0.2.3 for 18: %s %v", v, err)
+	}
+	_, _, err := SelectFor(idx, Host{Protocol: 1, Doze: "0.2.3"}, []string{"19"}, "")
+	var de *DozeError
+	if !errors.As(err, &de) || de.Need != "0.3.0" || !strings.Contains(err.Error(), "postgres 19 needs doze 0.3.0 or newer; this doze is 0.2.3") {
+		t.Errorf("0.2.3 for 19: %v", err)
+	}
+	if v, _, err := SelectFor(idx, Host{Protocol: 1, Doze: "dev"}, []string{"19"}, ""); err != nil || v != "0.3.0" {
+		t.Errorf("dev for 19: %s %v", v, err)
+	}
+}

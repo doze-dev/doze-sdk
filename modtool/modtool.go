@@ -265,6 +265,7 @@ func mergeIndex(path string, m Module, triple, archiveName, sha string, logf fun
 		}
 	}
 	rel.Protocol = proto.ProtocolVersion
+	rel.Doze = proto.MinHost
 	rel.Engines = engineMajors(m.Driver.Describe())
 	if rel.Artifacts == nil {
 		rel.Artifacts = map[string]modindex.Artifact{}

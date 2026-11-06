@@ -54,6 +54,11 @@ type Release struct {
 	Engines []string `yaml:"engines,omitempty" json:"engines,omitempty"`
 	// Artifacts maps a platform triple to its downloadable archive.
 	Artifacts map[string]Artifact `yaml:"artifacts" json:"artifacts"`
+	// Doze is the oldest doze that runs this release ("0.2.0"), from the SDK
+	// it was built with (proto.MinHost); empty for releases from before the
+	// field. It is not in the signed payload: a doze that predates it still
+	// verifies the index, and the artifacts stay signed either way.
+	Doze string `yaml:"doze,omitempty" json:"doze,omitempty"`
 }
 
 // Artifact is one downloadable module archive.
@@ -285,4 +290,75 @@ func CompareVersions(a, b string) int {
 		}
 	}
 	return 0
+}
+
+// DozeError is returned when every release that would otherwise fit needs a
+// newer doze than the one asking.
+type DozeError struct {
+	Module string
+	Majors []string
+	Need   string // the oldest doze any fitting release runs under
+	Have   string
+}
+
+func (e *DozeError) Error() string {
+	what := e.Module
+	if len(e.Majors) > 0 {
+		what += " " + strings.Join(e.Majors, ", ")
+	}
+	return fmt.Sprintf("%s needs doze %s or newer; this doze is %s. Update doze, then run the command again", what, e.Need, e.Have)
+}
+
+// Host is the doze asking: its plugin protocol, and its own version
+// ("0.2.1"). A version that is not a dotted number (a development build)
+// runs every release.
+type Host struct {
+	Protocol int
+	Doze     string
+}
+
+// SelectFor is Select for a host that also says its version: releases that
+// need a newer doze are left out first, so an older doze gets the newest
+// release it can run; when none is left, a DozeError says which doze to get.
+func SelectFor(idx *Index, host Host, requiredMajors []string, channel string) (string, Release, error) {
+	if !IsDozeVersion(host.Doze) {
+		return Select(idx, host.Protocol, requiredMajors, channel)
+	}
+	host.Doze = strings.TrimPrefix(host.Doze, "v")
+	fits := &Index{Schema: idx.Schema, Module: idx.Module, Namespace: idx.Namespace, Releases: map[string]Release{}, Channels: idx.Channels}
+	need := ""
+	for v, r := range idx.Releases {
+		if r.Doze != "" && CompareVersions(r.Doze, host.Doze) > 0 {
+			if r.Protocol == host.Protocol && Supports(r, requiredMajors) && (need == "" || CompareVersions(r.Doze, need) < 0) {
+				need = r.Doze
+			}
+			continue
+		}
+		fits.Releases[v] = r
+	}
+	v, r, err := Select(fits, host.Protocol, requiredMajors, channel)
+	if err != nil && need != "" {
+		return "", Release{}, &DozeError{Module: idx.Module, Majors: requiredMajors, Need: need, Have: host.Doze}
+	}
+	return v, r, err
+}
+
+// IsDozeVersion says v is a released doze's version: dotted numbers, with
+// or without a leading "v".
+func IsDozeVersion(v string) bool {
+	v = strings.TrimPrefix(v, "v")
+	if v == "" {
+		return false
+	}
+	for _, part := range strings.Split(v, ".") {
+		if part == "" {
+			return false
+		}
+		for _, c := range part {
+			if c < '0' || c > '9' {
+				return false
+			}
+		}
+	}
+	return true
 }
