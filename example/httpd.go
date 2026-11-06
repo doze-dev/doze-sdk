@@ -27,7 +27,6 @@ import (
 	"path/filepath"
 
 	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/hcl/v2/gohcl"
 
 	"github.com/doze-dev/doze-sdk/engine"
 	dozeplugin "github.com/doze-dev/doze-sdk/plugin"
@@ -87,8 +86,8 @@ func (Driver) Provisioned(dataDir string) bool {
 // arguments with engine.RequireVersion; httpd is versionless, so it ignores it.
 func (Driver) DecodeConfig(body hcl.Body, ctx *hcl.EvalContext, _ string, _ engine.VersionSpec) (engine.EngineConfig, error) {
 	var c Config
-	if d := gohcl.DecodeBody(body, ctx, &c); d.HasErrors() {
-		return nil, fmt.Errorf("%s", d.Error())
+	if err := engine.DecodeStrict(body, ctx, &c); err != nil {
+		return nil, err // the diagnostics themselves, so doze can show the line
 	}
 	if c.Root == "" {
 		c.Root = "."

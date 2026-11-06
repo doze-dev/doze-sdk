@@ -128,8 +128,11 @@ func TestRemoteDecodeDiagnostics(t *testing.T) {
 	file := []byte("kv \"cache\" {\n  version = 9\n  bogus   = 1\n}\n")
 	_, err = rd.DecodeRemote(file, "doze.hcl", "kv", "cache", nil, ".", "9")
 	var dd hcl.Diagnostics
-	if !errors.As(err, &dd) || len(dd) == 0 || dd[0].Subject == nil {
-		t.Fatalf("want positioned diagnostics, got %v", err)
+	if !errors.As(err, &dd) || len(dd) != 1 || dd[0].Subject == nil {
+		t.Fatalf("want one positioned diagnostic, got %v", err)
+	}
+	if s := dd[0].Subject; s.Filename != "doze.hcl" || s.Start.Line != 3 || s.Start.Column != 3 {
+		t.Errorf("subject = %v, want doze.hcl line 3 column 3", s)
 	}
 	if !strings.Contains(err.Error(), "bogus") {
 		t.Errorf("Error() = %q, want the module's text", err.Error())

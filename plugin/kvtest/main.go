@@ -33,7 +33,7 @@ func (driver) Type() string { return "kv" }
 func (driver) DecodeConfig(body hcl.Body, ctx *hcl.EvalContext, _ string, _ engine.VersionSpec) (engine.EngineConfig, error) {
 	var c Config
 	if d := gohcl.DecodeBody(body, ctx, &c); d.HasErrors() {
-		return nil, fmt.Errorf("kv config: %s", d)
+		return nil, fmt.Errorf("kv config: %w", d)
 	}
 	return &c, nil
 }
