@@ -189,29 +189,31 @@ func (s *engineServer) DecodeConfig(_ context.Context, req *proto.DecodeRequest)
 	if filename == "" {
 		filename = req.BlockLabel + ".doze.hcl"
 	}
+	// Every failure keeps the text it always sent; where it has positions, the
+	// diagnostics ride along too (decodeFailure), for a host that renders them.
 	file, diags := hclparse.NewParser().ParseHCL(req.File, filename)
 	if diags.HasErrors() {
-		return nil, fmt.Errorf("parsing config: %s", diagsText(diags))
+		return nil, decodeFailure("parsing config: "+diagsText(diags), diags)
 	}
 	content, _, diags := file.Body.PartialContent(&hcl.BodySchema{
 		Blocks: []hcl.BlockHeaderSchema{{Type: req.BlockType, LabelNames: []string{"name"}}},
 	})
 	if diags.HasErrors() {
-		return nil, fmt.Errorf("reading config blocks: %s", diags)
+		return nil, decodeFailure("reading config blocks: "+diags.Error(), diags)
 	}
-	var blockBody hcl.Body
+	var block *hcl.Block
 	for _, b := range content.Blocks {
 		if len(b.Labels) == 1 && b.Labels[0] == req.BlockLabel {
-			blockBody = b.Body
+			block = b
 			break
 		}
 	}
-	if blockBody == nil {
+	if block == nil {
 		return nil, fmt.Errorf("block %s %q not found in source", req.BlockType, req.BlockLabel)
 	}
-	_, remain, diags := blockBody.PartialContent(stripSchema)
+	_, remain, diags := block.Body.PartialContent(stripSchema)
 	if diags.HasErrors() {
-		return nil, fmt.Errorf("stripping config: %s", diagsText(diags))
+		return nil, decodeFailure("stripping config: "+diagsText(diags), diags)
 	}
 	vars, err := varsFromJSON(req.Variables)
 	if err != nil {
@@ -222,12 +224,17 @@ func (s *engineServer) DecodeConfig(_ context.Context, req *proto.DecodeRequest)
 	if err != nil {
 		// A gohcl decode error is usually hcl.Diagnostics, whose Error() hides
 		// everything past the first entry behind "and N other diagnostic(s)".
-		// The wire carries a flat string, so expand them all here.
+		// The message is a flat string, so expand them all here.
 		var dd hcl.Diagnostics
 		if errors.As(err, &dd) {
-			return nil, fmt.Errorf("%s", diagsText(dd))
+			return nil, decodeFailure(diagsText(dd), dd)
 		}
-		return nil, err
+		// An error the driver could not place belongs to the block.
+		return nil, decodeFailure(err.Error(), hcl.Diagnostics{{
+			Severity: hcl.DiagError,
+			Summary:  err.Error(),
+			Subject:  block.DefRange.Ptr(),
+		}})
 	}
 	b, err := encodeSpec(spec)
 	if err != nil {

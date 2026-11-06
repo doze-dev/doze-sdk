@@ -1151,6 +1151,253 @@ func (x *DecodeResponse) GetSpec() []byte {
 	return nil
 }
 
+// DecodeDiagnostics rides a failed DecodeConfig as a gRPC status detail, so the
+// host can render the module's errors with file, line and snippet like its
+// own. The status message is unchanged (every diagnostic flattened, one per
+// line): a host that doesn't know the detail ignores it and shows the message,
+// and a host that does falls back to the message when a module sends none.
+type DecodeDiagnostics struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Diagnostics   []*Diagnostic          `protobuf:"bytes,1,rep,name=diagnostics,proto3" json:"diagnostics,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DecodeDiagnostics) Reset() {
+	*x = DecodeDiagnostics{}
+	mi := &file_engine_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DecodeDiagnostics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DecodeDiagnostics) ProtoMessage() {}
+
+func (x *DecodeDiagnostics) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DecodeDiagnostics.ProtoReflect.Descriptor instead.
+func (*DecodeDiagnostics) Descriptor() ([]byte, []int) {
+	return file_engine_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *DecodeDiagnostics) GetDiagnostics() []*Diagnostic {
+	if x != nil {
+		return x.Diagnostics
+	}
+	return nil
+}
+
+type Diagnostic struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Warning       bool                   `protobuf:"varint,1,opt,name=warning,proto3" json:"warning,omitempty"` // false: an error
+	Summary       string                 `protobuf:"bytes,2,opt,name=summary,proto3" json:"summary,omitempty"`
+	Detail        string                 `protobuf:"bytes,3,opt,name=detail,proto3" json:"detail,omitempty"`
+	Subject       *SourceRange           `protobuf:"bytes,4,opt,name=subject,proto3" json:"subject,omitempty"` // unset: the diagnostic has no position
+	Context       *SourceRange           `protobuf:"bytes,5,opt,name=context,proto3" json:"context,omitempty"` // unset: the subject alone is the snippet
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Diagnostic) Reset() {
+	*x = Diagnostic{}
+	mi := &file_engine_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Diagnostic) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Diagnostic) ProtoMessage() {}
+
+func (x *Diagnostic) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Diagnostic.ProtoReflect.Descriptor instead.
+func (*Diagnostic) Descriptor() ([]byte, []int) {
+	return file_engine_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *Diagnostic) GetWarning() bool {
+	if x != nil {
+		return x.Warning
+	}
+	return false
+}
+
+func (x *Diagnostic) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *Diagnostic) GetDetail() string {
+	if x != nil {
+		return x.Detail
+	}
+	return ""
+}
+
+func (x *Diagnostic) GetSubject() *SourceRange {
+	if x != nil {
+		return x.Subject
+	}
+	return nil
+}
+
+func (x *Diagnostic) GetContext() *SourceRange {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
+// SourceRange is an hcl.Range in the file the module parsed (DecodeRequest's
+// filename). byte is the offset in the file the host sent.
+type SourceRange struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	Start         *SourcePos             `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
+	End           *SourcePos             `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SourceRange) Reset() {
+	*x = SourceRange{}
+	mi := &file_engine_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SourceRange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SourceRange) ProtoMessage() {}
+
+func (x *SourceRange) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SourceRange.ProtoReflect.Descriptor instead.
+func (*SourceRange) Descriptor() ([]byte, []int) {
+	return file_engine_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SourceRange) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *SourceRange) GetStart() *SourcePos {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *SourceRange) GetEnd() *SourcePos {
+	if x != nil {
+		return x.End
+	}
+	return nil
+}
+
+type SourcePos struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Line          int64                  `protobuf:"varint,1,opt,name=line,proto3" json:"line,omitempty"`
+	Column        int64                  `protobuf:"varint,2,opt,name=column,proto3" json:"column,omitempty"`
+	Byte          int64                  `protobuf:"varint,3,opt,name=byte,proto3" json:"byte,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SourcePos) Reset() {
+	*x = SourcePos{}
+	mi := &file_engine_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SourcePos) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SourcePos) ProtoMessage() {}
+
+func (x *SourcePos) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SourcePos.ProtoReflect.Descriptor instead.
+func (*SourcePos) Descriptor() ([]byte, []int) {
+	return file_engine_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *SourcePos) GetLine() int64 {
+	if x != nil {
+		return x.Line
+	}
+	return 0
+}
+
+func (x *SourcePos) GetColumn() int64 {
+	if x != nil {
+		return x.Column
+	}
+	return 0
+}
+
+func (x *SourcePos) GetByte() int64 {
+	if x != nil {
+		return x.Byte
+	}
+	return 0
+}
+
 type ResolveRequest struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Spec     string                 `protobuf:"bytes,1,opt,name=spec,proto3" json:"spec,omitempty"`
@@ -1167,7 +1414,7 @@ type ResolveRequest struct {
 
 func (x *ResolveRequest) Reset() {
 	*x = ResolveRequest{}
-	mi := &file_engine_proto_msgTypes[17]
+	mi := &file_engine_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1179,7 +1426,7 @@ func (x *ResolveRequest) String() string {
 func (*ResolveRequest) ProtoMessage() {}
 
 func (x *ResolveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[17]
+	mi := &file_engine_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1192,7 +1439,7 @@ func (x *ResolveRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveRequest.ProtoReflect.Descriptor instead.
 func (*ResolveRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{17}
+	return file_engine_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ResolveRequest) GetSpec() string {
@@ -1233,7 +1480,7 @@ type ResolveResponse struct {
 
 func (x *ResolveResponse) Reset() {
 	*x = ResolveResponse{}
-	mi := &file_engine_proto_msgTypes[18]
+	mi := &file_engine_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1245,7 +1492,7 @@ func (x *ResolveResponse) String() string {
 func (*ResolveResponse) ProtoMessage() {}
 
 func (x *ResolveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[18]
+	mi := &file_engine_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1258,7 +1505,7 @@ func (x *ResolveResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveResponse.ProtoReflect.Descriptor instead.
 func (*ResolveResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{18}
+	return file_engine_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ResolveResponse) GetToolchain() *Toolchain {
@@ -1285,7 +1532,7 @@ type ProvisionRequest struct {
 
 func (x *ProvisionRequest) Reset() {
 	*x = ProvisionRequest{}
-	mi := &file_engine_proto_msgTypes[19]
+	mi := &file_engine_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1297,7 +1544,7 @@ func (x *ProvisionRequest) String() string {
 func (*ProvisionRequest) ProtoMessage() {}
 
 func (x *ProvisionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[19]
+	mi := &file_engine_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1310,7 +1557,7 @@ func (x *ProvisionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProvisionRequest.ProtoReflect.Descriptor instead.
 func (*ProvisionRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{19}
+	return file_engine_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ProvisionRequest) GetInstance() *Instance {
@@ -1336,7 +1583,7 @@ type ProvisionedRequest struct {
 
 func (x *ProvisionedRequest) Reset() {
 	*x = ProvisionedRequest{}
-	mi := &file_engine_proto_msgTypes[20]
+	mi := &file_engine_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1348,7 +1595,7 @@ func (x *ProvisionedRequest) String() string {
 func (*ProvisionedRequest) ProtoMessage() {}
 
 func (x *ProvisionedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[20]
+	mi := &file_engine_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1361,7 +1608,7 @@ func (x *ProvisionedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProvisionedRequest.ProtoReflect.Descriptor instead.
 func (*ProvisionedRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{20}
+	return file_engine_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ProvisionedRequest) GetDataDir() string {
@@ -1380,7 +1627,7 @@ type ProvisionedResponse struct {
 
 func (x *ProvisionedResponse) Reset() {
 	*x = ProvisionedResponse{}
-	mi := &file_engine_proto_msgTypes[21]
+	mi := &file_engine_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1392,7 +1639,7 @@ func (x *ProvisionedResponse) String() string {
 func (*ProvisionedResponse) ProtoMessage() {}
 
 func (x *ProvisionedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[21]
+	mi := &file_engine_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1405,7 +1652,7 @@ func (x *ProvisionedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProvisionedResponse.ProtoReflect.Descriptor instead.
 func (*ProvisionedResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{21}
+	return file_engine_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ProvisionedResponse) GetProvisioned() bool {
@@ -1425,7 +1672,7 @@ type BackendSocketRequest struct {
 
 func (x *BackendSocketRequest) Reset() {
 	*x = BackendSocketRequest{}
-	mi := &file_engine_proto_msgTypes[22]
+	mi := &file_engine_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1437,7 +1684,7 @@ func (x *BackendSocketRequest) String() string {
 func (*BackendSocketRequest) ProtoMessage() {}
 
 func (x *BackendSocketRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[22]
+	mi := &file_engine_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1450,7 +1697,7 @@ func (x *BackendSocketRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackendSocketRequest.ProtoReflect.Descriptor instead.
 func (*BackendSocketRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{22}
+	return file_engine_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *BackendSocketRequest) GetSocketDir() string {
@@ -1476,7 +1723,7 @@ type BackendSocketResponse struct {
 
 func (x *BackendSocketResponse) Reset() {
 	*x = BackendSocketResponse{}
-	mi := &file_engine_proto_msgTypes[23]
+	mi := &file_engine_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1488,7 +1735,7 @@ func (x *BackendSocketResponse) String() string {
 func (*BackendSocketResponse) ProtoMessage() {}
 
 func (x *BackendSocketResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[23]
+	mi := &file_engine_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1501,7 +1748,7 @@ func (x *BackendSocketResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackendSocketResponse.ProtoReflect.Descriptor instead.
 func (*BackendSocketResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{23}
+	return file_engine_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *BackendSocketResponse) GetPath() string {
@@ -1521,7 +1768,7 @@ type ConnStringRequest struct {
 
 func (x *ConnStringRequest) Reset() {
 	*x = ConnStringRequest{}
-	mi := &file_engine_proto_msgTypes[24]
+	mi := &file_engine_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1533,7 +1780,7 @@ func (x *ConnStringRequest) String() string {
 func (*ConnStringRequest) ProtoMessage() {}
 
 func (x *ConnStringRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[24]
+	mi := &file_engine_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1546,7 +1793,7 @@ func (x *ConnStringRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnStringRequest.ProtoReflect.Descriptor instead.
 func (*ConnStringRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{24}
+	return file_engine_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ConnStringRequest) GetInstance() *Instance {
@@ -1573,7 +1820,7 @@ type ConnStringResponse struct {
 
 func (x *ConnStringResponse) Reset() {
 	*x = ConnStringResponse{}
-	mi := &file_engine_proto_msgTypes[25]
+	mi := &file_engine_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1585,7 +1832,7 @@ func (x *ConnStringResponse) String() string {
 func (*ConnStringResponse) ProtoMessage() {}
 
 func (x *ConnStringResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[25]
+	mi := &file_engine_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1598,7 +1845,7 @@ func (x *ConnStringResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnStringResponse.ProtoReflect.Descriptor instead.
 func (*ConnStringResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{25}
+	return file_engine_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ConnStringResponse) GetEnvVar() string {
@@ -1625,7 +1872,7 @@ type PlanRequest struct {
 
 func (x *PlanRequest) Reset() {
 	*x = PlanRequest{}
-	mi := &file_engine_proto_msgTypes[26]
+	mi := &file_engine_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1637,7 +1884,7 @@ func (x *PlanRequest) String() string {
 func (*PlanRequest) ProtoMessage() {}
 
 func (x *PlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[26]
+	mi := &file_engine_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1650,7 +1897,7 @@ func (x *PlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanRequest.ProtoReflect.Descriptor instead.
 func (*PlanRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{26}
+	return file_engine_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *PlanRequest) GetInstance() *Instance {
@@ -1677,7 +1924,7 @@ type EnsureTemplateRequest struct {
 
 func (x *EnsureTemplateRequest) Reset() {
 	*x = EnsureTemplateRequest{}
-	mi := &file_engine_proto_msgTypes[27]
+	mi := &file_engine_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1689,7 +1936,7 @@ func (x *EnsureTemplateRequest) String() string {
 func (*EnsureTemplateRequest) ProtoMessage() {}
 
 func (x *EnsureTemplateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[27]
+	mi := &file_engine_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1702,7 +1949,7 @@ func (x *EnsureTemplateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnsureTemplateRequest.ProtoReflect.Descriptor instead.
 func (*EnsureTemplateRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{27}
+	return file_engine_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *EnsureTemplateRequest) GetToolchain() *Toolchain {
@@ -1729,7 +1976,7 @@ type CloneTemplateRequest struct {
 
 func (x *CloneTemplateRequest) Reset() {
 	*x = CloneTemplateRequest{}
-	mi := &file_engine_proto_msgTypes[28]
+	mi := &file_engine_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1741,7 +1988,7 @@ func (x *CloneTemplateRequest) String() string {
 func (*CloneTemplateRequest) ProtoMessage() {}
 
 func (x *CloneTemplateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[28]
+	mi := &file_engine_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1754,7 +2001,7 @@ func (x *CloneTemplateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloneTemplateRequest.ProtoReflect.Descriptor instead.
 func (*CloneTemplateRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{28}
+	return file_engine_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *CloneTemplateRequest) GetTemplateDir() string {
@@ -1782,7 +2029,7 @@ type WireAddrResponse struct {
 
 func (x *WireAddrResponse) Reset() {
 	*x = WireAddrResponse{}
-	mi := &file_engine_proto_msgTypes[29]
+	mi := &file_engine_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1794,7 +2041,7 @@ func (x *WireAddrResponse) String() string {
 func (*WireAddrResponse) ProtoMessage() {}
 
 func (x *WireAddrResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[29]
+	mi := &file_engine_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1807,7 +2054,7 @@ func (x *WireAddrResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WireAddrResponse.ProtoReflect.Descriptor instead.
 func (*WireAddrResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{29}
+	return file_engine_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *WireAddrResponse) GetPath() string {
@@ -1828,7 +2075,7 @@ type ConvergeRequest struct {
 
 func (x *ConvergeRequest) Reset() {
 	*x = ConvergeRequest{}
-	mi := &file_engine_proto_msgTypes[30]
+	mi := &file_engine_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1840,7 +2087,7 @@ func (x *ConvergeRequest) String() string {
 func (*ConvergeRequest) ProtoMessage() {}
 
 func (x *ConvergeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[30]
+	mi := &file_engine_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1853,7 +2100,7 @@ func (x *ConvergeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConvergeRequest.ProtoReflect.Descriptor instead.
 func (*ConvergeRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{30}
+	return file_engine_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ConvergeRequest) GetInstance() *Instance {
@@ -1886,7 +2133,7 @@ type ObjectsRequest struct {
 
 func (x *ObjectsRequest) Reset() {
 	*x = ObjectsRequest{}
-	mi := &file_engine_proto_msgTypes[31]
+	mi := &file_engine_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1898,7 +2145,7 @@ func (x *ObjectsRequest) String() string {
 func (*ObjectsRequest) ProtoMessage() {}
 
 func (x *ObjectsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[31]
+	mi := &file_engine_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1911,7 +2158,7 @@ func (x *ObjectsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectsRequest.ProtoReflect.Descriptor instead.
 func (*ObjectsRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{31}
+	return file_engine_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ObjectsRequest) GetInstance() *Instance {
@@ -1930,7 +2177,7 @@ type ObjectsResponse struct {
 
 func (x *ObjectsResponse) Reset() {
 	*x = ObjectsResponse{}
-	mi := &file_engine_proto_msgTypes[32]
+	mi := &file_engine_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1942,7 +2189,7 @@ func (x *ObjectsResponse) String() string {
 func (*ObjectsResponse) ProtoMessage() {}
 
 func (x *ObjectsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[32]
+	mi := &file_engine_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1955,7 +2202,7 @@ func (x *ObjectsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectsResponse.ProtoReflect.Descriptor instead.
 func (*ObjectsResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{32}
+	return file_engine_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ObjectsResponse) GetObjects() []*Object {
@@ -1977,7 +2224,7 @@ type PruneRequest struct {
 
 func (x *PruneRequest) Reset() {
 	*x = PruneRequest{}
-	mi := &file_engine_proto_msgTypes[33]
+	mi := &file_engine_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1989,7 +2236,7 @@ func (x *PruneRequest) String() string {
 func (*PruneRequest) ProtoMessage() {}
 
 func (x *PruneRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[33]
+	mi := &file_engine_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2002,7 +2249,7 @@ func (x *PruneRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PruneRequest.ProtoReflect.Descriptor instead.
 func (*PruneRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{33}
+	return file_engine_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *PruneRequest) GetInstance() *Instance {
@@ -2043,7 +2290,7 @@ type AttributesRequest struct {
 
 func (x *AttributesRequest) Reset() {
 	*x = AttributesRequest{}
-	mi := &file_engine_proto_msgTypes[34]
+	mi := &file_engine_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2055,7 +2302,7 @@ func (x *AttributesRequest) String() string {
 func (*AttributesRequest) ProtoMessage() {}
 
 func (x *AttributesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[34]
+	mi := &file_engine_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2068,7 +2315,7 @@ func (x *AttributesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttributesRequest.ProtoReflect.Descriptor instead.
 func (*AttributesRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{34}
+	return file_engine_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *AttributesRequest) GetInstance() *Instance {
@@ -2094,7 +2341,7 @@ type AttributesResponse struct {
 
 func (x *AttributesResponse) Reset() {
 	*x = AttributesResponse{}
-	mi := &file_engine_proto_msgTypes[35]
+	mi := &file_engine_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2106,7 +2353,7 @@ func (x *AttributesResponse) String() string {
 func (*AttributesResponse) ProtoMessage() {}
 
 func (x *AttributesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[35]
+	mi := &file_engine_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2119,7 +2366,7 @@ func (x *AttributesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttributesResponse.ProtoReflect.Descriptor instead.
 func (*AttributesResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{35}
+	return file_engine_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *AttributesResponse) GetAttrs() map[string][]byte {
@@ -2138,7 +2385,7 @@ type BackendURLRequest struct {
 
 func (x *BackendURLRequest) Reset() {
 	*x = BackendURLRequest{}
-	mi := &file_engine_proto_msgTypes[36]
+	mi := &file_engine_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2150,7 +2397,7 @@ func (x *BackendURLRequest) String() string {
 func (*BackendURLRequest) ProtoMessage() {}
 
 func (x *BackendURLRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[36]
+	mi := &file_engine_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2163,7 +2410,7 @@ func (x *BackendURLRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackendURLRequest.ProtoReflect.Descriptor instead.
 func (*BackendURLRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{36}
+	return file_engine_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *BackendURLRequest) GetInstance() *Instance {
@@ -2182,7 +2429,7 @@ type BackendURLResponse struct {
 
 func (x *BackendURLResponse) Reset() {
 	*x = BackendURLResponse{}
-	mi := &file_engine_proto_msgTypes[37]
+	mi := &file_engine_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2194,7 +2441,7 @@ func (x *BackendURLResponse) String() string {
 func (*BackendURLResponse) ProtoMessage() {}
 
 func (x *BackendURLResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[37]
+	mi := &file_engine_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2207,7 +2454,7 @@ func (x *BackendURLResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackendURLResponse.ProtoReflect.Descriptor instead.
 func (*BackendURLResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{37}
+	return file_engine_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *BackendURLResponse) GetUrl() string {
@@ -2226,7 +2473,7 @@ type SupervisedRequest struct {
 
 func (x *SupervisedRequest) Reset() {
 	*x = SupervisedRequest{}
-	mi := &file_engine_proto_msgTypes[38]
+	mi := &file_engine_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2238,7 +2485,7 @@ func (x *SupervisedRequest) String() string {
 func (*SupervisedRequest) ProtoMessage() {}
 
 func (x *SupervisedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[38]
+	mi := &file_engine_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2251,7 +2498,7 @@ func (x *SupervisedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SupervisedRequest.ProtoReflect.Descriptor instead.
 func (*SupervisedRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{38}
+	return file_engine_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *SupervisedRequest) GetInstance() *Instance {
@@ -2270,7 +2517,7 @@ type SupervisedResponse struct {
 
 func (x *SupervisedResponse) Reset() {
 	*x = SupervisedResponse{}
-	mi := &file_engine_proto_msgTypes[39]
+	mi := &file_engine_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2282,7 +2529,7 @@ func (x *SupervisedResponse) String() string {
 func (*SupervisedResponse) ProtoMessage() {}
 
 func (x *SupervisedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[39]
+	mi := &file_engine_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2295,7 +2542,7 @@ func (x *SupervisedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SupervisedResponse.ProtoReflect.Descriptor instead.
 func (*SupervisedResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{39}
+	return file_engine_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *SupervisedResponse) GetSupervised() bool {
@@ -2315,7 +2562,7 @@ type HookRequest struct {
 
 func (x *HookRequest) Reset() {
 	*x = HookRequest{}
-	mi := &file_engine_proto_msgTypes[40]
+	mi := &file_engine_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2327,7 +2574,7 @@ func (x *HookRequest) String() string {
 func (*HookRequest) ProtoMessage() {}
 
 func (x *HookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[40]
+	mi := &file_engine_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2340,7 +2587,7 @@ func (x *HookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HookRequest.ProtoReflect.Descriptor instead.
 func (*HookRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{40}
+	return file_engine_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *HookRequest) GetInstance() *Instance {
@@ -2366,7 +2613,7 @@ type HealthRequest struct {
 
 func (x *HealthRequest) Reset() {
 	*x = HealthRequest{}
-	mi := &file_engine_proto_msgTypes[41]
+	mi := &file_engine_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2378,7 +2625,7 @@ func (x *HealthRequest) String() string {
 func (*HealthRequest) ProtoMessage() {}
 
 func (x *HealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[41]
+	mi := &file_engine_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2391,7 +2638,7 @@ func (x *HealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthRequest.ProtoReflect.Descriptor instead.
 func (*HealthRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{41}
+	return file_engine_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *HealthRequest) GetInstance() *Instance {
@@ -2410,7 +2657,7 @@ type RestartPolicyRequest struct {
 
 func (x *RestartPolicyRequest) Reset() {
 	*x = RestartPolicyRequest{}
-	mi := &file_engine_proto_msgTypes[42]
+	mi := &file_engine_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2422,7 +2669,7 @@ func (x *RestartPolicyRequest) String() string {
 func (*RestartPolicyRequest) ProtoMessage() {}
 
 func (x *RestartPolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[42]
+	mi := &file_engine_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2435,7 +2682,7 @@ func (x *RestartPolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartPolicyRequest.ProtoReflect.Descriptor instead.
 func (*RestartPolicyRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{42}
+	return file_engine_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *RestartPolicyRequest) GetInstance() *Instance {
@@ -2454,7 +2701,7 @@ type AddrRequest struct {
 
 func (x *AddrRequest) Reset() {
 	*x = AddrRequest{}
-	mi := &file_engine_proto_msgTypes[43]
+	mi := &file_engine_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2466,7 +2713,7 @@ func (x *AddrRequest) String() string {
 func (*AddrRequest) ProtoMessage() {}
 
 func (x *AddrRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[43]
+	mi := &file_engine_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2479,7 +2726,7 @@ func (x *AddrRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddrRequest.ProtoReflect.Descriptor instead.
 func (*AddrRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{43}
+	return file_engine_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *AddrRequest) GetInstance() *Instance {
@@ -2499,7 +2746,7 @@ type AddrResponse struct {
 
 func (x *AddrResponse) Reset() {
 	*x = AddrResponse{}
-	mi := &file_engine_proto_msgTypes[44]
+	mi := &file_engine_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2511,7 +2758,7 @@ func (x *AddrResponse) String() string {
 func (*AddrResponse) ProtoMessage() {}
 
 func (x *AddrResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[44]
+	mi := &file_engine_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2524,7 +2771,7 @@ func (x *AddrResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddrResponse.ProtoReflect.Descriptor instead.
 func (*AddrResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{44}
+	return file_engine_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *AddrResponse) GetAddr() string {
@@ -2554,7 +2801,7 @@ type Resource struct {
 
 func (x *Resource) Reset() {
 	*x = Resource{}
-	mi := &file_engine_proto_msgTypes[45]
+	mi := &file_engine_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2566,7 +2813,7 @@ func (x *Resource) String() string {
 func (*Resource) ProtoMessage() {}
 
 func (x *Resource) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[45]
+	mi := &file_engine_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2579,7 +2826,7 @@ func (x *Resource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Resource.ProtoReflect.Descriptor instead.
 func (*Resource) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{45}
+	return file_engine_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *Resource) GetKind() string {
@@ -2623,7 +2870,7 @@ type Action struct {
 
 func (x *Action) Reset() {
 	*x = Action{}
-	mi := &file_engine_proto_msgTypes[46]
+	mi := &file_engine_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2635,7 +2882,7 @@ func (x *Action) String() string {
 func (*Action) ProtoMessage() {}
 
 func (x *Action) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[46]
+	mi := &file_engine_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2648,7 +2895,7 @@ func (x *Action) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Action.ProtoReflect.Descriptor instead.
 func (*Action) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{46}
+	return file_engine_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *Action) GetId() string {
@@ -2695,7 +2942,7 @@ type ActionsResponse struct {
 
 func (x *ActionsResponse) Reset() {
 	*x = ActionsResponse{}
-	mi := &file_engine_proto_msgTypes[47]
+	mi := &file_engine_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2707,7 +2954,7 @@ func (x *ActionsResponse) String() string {
 func (*ActionsResponse) ProtoMessage() {}
 
 func (x *ActionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[47]
+	mi := &file_engine_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2720,7 +2967,7 @@ func (x *ActionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionsResponse.ProtoReflect.Descriptor instead.
 func (*ActionsResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{47}
+	return file_engine_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *ActionsResponse) GetActions() []*Action {
@@ -2740,7 +2987,7 @@ type ResourcesRequest struct {
 
 func (x *ResourcesRequest) Reset() {
 	*x = ResourcesRequest{}
-	mi := &file_engine_proto_msgTypes[48]
+	mi := &file_engine_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2752,7 +2999,7 @@ func (x *ResourcesRequest) String() string {
 func (*ResourcesRequest) ProtoMessage() {}
 
 func (x *ResourcesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[48]
+	mi := &file_engine_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2765,7 +3012,7 @@ func (x *ResourcesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourcesRequest.ProtoReflect.Descriptor instead.
 func (*ResourcesRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{48}
+	return file_engine_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *ResourcesRequest) GetInstance() *Instance {
@@ -2791,7 +3038,7 @@ type ResourcesResponse struct {
 
 func (x *ResourcesResponse) Reset() {
 	*x = ResourcesResponse{}
-	mi := &file_engine_proto_msgTypes[49]
+	mi := &file_engine_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2803,7 +3050,7 @@ func (x *ResourcesResponse) String() string {
 func (*ResourcesResponse) ProtoMessage() {}
 
 func (x *ResourcesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[49]
+	mi := &file_engine_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2816,7 +3063,7 @@ func (x *ResourcesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourcesResponse.ProtoReflect.Descriptor instead.
 func (*ResourcesResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{49}
+	return file_engine_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *ResourcesResponse) GetResources() []*Resource {
@@ -2839,7 +3086,7 @@ type RunActionRequest struct {
 
 func (x *RunActionRequest) Reset() {
 	*x = RunActionRequest{}
-	mi := &file_engine_proto_msgTypes[50]
+	mi := &file_engine_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2851,7 +3098,7 @@ func (x *RunActionRequest) String() string {
 func (*RunActionRequest) ProtoMessage() {}
 
 func (x *RunActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[50]
+	mi := &file_engine_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2864,7 +3111,7 @@ func (x *RunActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunActionRequest.ProtoReflect.Descriptor instead.
 func (*RunActionRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{50}
+	return file_engine_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *RunActionRequest) GetInstance() *Instance {
@@ -2911,7 +3158,7 @@ type RunActionResponse struct {
 
 func (x *RunActionResponse) Reset() {
 	*x = RunActionResponse{}
-	mi := &file_engine_proto_msgTypes[51]
+	mi := &file_engine_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2923,7 +3170,7 @@ func (x *RunActionResponse) String() string {
 func (*RunActionResponse) ProtoMessage() {}
 
 func (x *RunActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[51]
+	mi := &file_engine_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2936,7 +3183,7 @@ func (x *RunActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunActionResponse.ProtoReflect.Descriptor instead.
 func (*RunActionResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{51}
+	return file_engine_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *RunActionResponse) GetResult() string {
@@ -2962,7 +3209,7 @@ type ConsoleColumn struct {
 
 func (x *ConsoleColumn) Reset() {
 	*x = ConsoleColumn{}
-	mi := &file_engine_proto_msgTypes[52]
+	mi := &file_engine_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2974,7 +3221,7 @@ func (x *ConsoleColumn) String() string {
 func (*ConsoleColumn) ProtoMessage() {}
 
 func (x *ConsoleColumn) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[52]
+	mi := &file_engine_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2987,7 +3234,7 @@ func (x *ConsoleColumn) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsoleColumn.ProtoReflect.Descriptor instead.
 func (*ConsoleColumn) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{52}
+	return file_engine_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *ConsoleColumn) GetKey() string {
@@ -3032,7 +3279,7 @@ type ConsolePanel struct {
 
 func (x *ConsolePanel) Reset() {
 	*x = ConsolePanel{}
-	mi := &file_engine_proto_msgTypes[53]
+	mi := &file_engine_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3044,7 +3291,7 @@ func (x *ConsolePanel) String() string {
 func (*ConsolePanel) ProtoMessage() {}
 
 func (x *ConsolePanel) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[53]
+	mi := &file_engine_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3057,7 +3304,7 @@ func (x *ConsolePanel) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsolePanel.ProtoReflect.Descriptor instead.
 func (*ConsolePanel) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{53}
+	return file_engine_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *ConsolePanel) GetId() string {
@@ -3119,7 +3366,7 @@ type ConsoleNode struct {
 
 func (x *ConsoleNode) Reset() {
 	*x = ConsoleNode{}
-	mi := &file_engine_proto_msgTypes[54]
+	mi := &file_engine_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3131,7 +3378,7 @@ func (x *ConsoleNode) String() string {
 func (*ConsoleNode) ProtoMessage() {}
 
 func (x *ConsoleNode) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[54]
+	mi := &file_engine_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3144,7 +3391,7 @@ func (x *ConsoleNode) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsoleNode.ProtoReflect.Descriptor instead.
 func (*ConsoleNode) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{54}
+	return file_engine_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *ConsoleNode) GetKind() string {
@@ -3221,7 +3468,7 @@ type ConsoleTab struct {
 
 func (x *ConsoleTab) Reset() {
 	*x = ConsoleTab{}
-	mi := &file_engine_proto_msgTypes[55]
+	mi := &file_engine_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3233,7 +3480,7 @@ func (x *ConsoleTab) String() string {
 func (*ConsoleTab) ProtoMessage() {}
 
 func (x *ConsoleTab) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[55]
+	mi := &file_engine_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3246,7 +3493,7 @@ func (x *ConsoleTab) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsoleTab.ProtoReflect.Descriptor instead.
 func (*ConsoleTab) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{55}
+	return file_engine_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *ConsoleTab) GetId() string {
@@ -3280,7 +3527,7 @@ type ConsoleExtension struct {
 
 func (x *ConsoleExtension) Reset() {
 	*x = ConsoleExtension{}
-	mi := &file_engine_proto_msgTypes[56]
+	mi := &file_engine_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3292,7 +3539,7 @@ func (x *ConsoleExtension) String() string {
 func (*ConsoleExtension) ProtoMessage() {}
 
 func (x *ConsoleExtension) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[56]
+	mi := &file_engine_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3305,7 +3552,7 @@ func (x *ConsoleExtension) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsoleExtension.ProtoReflect.Descriptor instead.
 func (*ConsoleExtension) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{56}
+	return file_engine_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *ConsoleExtension) GetAfter() string {
@@ -3335,7 +3582,7 @@ type ConsoleSpec struct {
 
 func (x *ConsoleSpec) Reset() {
 	*x = ConsoleSpec{}
-	mi := &file_engine_proto_msgTypes[57]
+	mi := &file_engine_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3347,7 +3594,7 @@ func (x *ConsoleSpec) String() string {
 func (*ConsoleSpec) ProtoMessage() {}
 
 func (x *ConsoleSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[57]
+	mi := &file_engine_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3360,7 +3607,7 @@ func (x *ConsoleSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsoleSpec.ProtoReflect.Descriptor instead.
 func (*ConsoleSpec) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{57}
+	return file_engine_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *ConsoleSpec) GetFront() string {
@@ -3408,7 +3655,7 @@ type ConsoleRow struct {
 
 func (x *ConsoleRow) Reset() {
 	*x = ConsoleRow{}
-	mi := &file_engine_proto_msgTypes[58]
+	mi := &file_engine_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3420,7 +3667,7 @@ func (x *ConsoleRow) String() string {
 func (*ConsoleRow) ProtoMessage() {}
 
 func (x *ConsoleRow) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[58]
+	mi := &file_engine_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3433,7 +3680,7 @@ func (x *ConsoleRow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsoleRow.ProtoReflect.Descriptor instead.
 func (*ConsoleRow) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{58}
+	return file_engine_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *ConsoleRow) GetCells() map[string]string {
@@ -3462,7 +3709,7 @@ type TailRequest struct {
 
 func (x *TailRequest) Reset() {
 	*x = TailRequest{}
-	mi := &file_engine_proto_msgTypes[59]
+	mi := &file_engine_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3474,7 +3721,7 @@ func (x *TailRequest) String() string {
 func (*TailRequest) ProtoMessage() {}
 
 func (x *TailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[59]
+	mi := &file_engine_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3487,7 +3734,7 @@ func (x *TailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TailRequest.ProtoReflect.Descriptor instead.
 func (*TailRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{59}
+	return file_engine_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *TailRequest) GetInstance() *Instance {
@@ -3528,7 +3775,7 @@ type ResolveMajorRequest struct {
 
 func (x *ResolveMajorRequest) Reset() {
 	*x = ResolveMajorRequest{}
-	mi := &file_engine_proto_msgTypes[60]
+	mi := &file_engine_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3540,7 +3787,7 @@ func (x *ResolveMajorRequest) String() string {
 func (*ResolveMajorRequest) ProtoMessage() {}
 
 func (x *ResolveMajorRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[60]
+	mi := &file_engine_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3553,7 +3800,7 @@ func (x *ResolveMajorRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveMajorRequest.ProtoReflect.Descriptor instead.
 func (*ResolveMajorRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{60}
+	return file_engine_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *ResolveMajorRequest) GetEngine() string {
@@ -3579,7 +3826,7 @@ type ResolveMajorResponse struct {
 
 func (x *ResolveMajorResponse) Reset() {
 	*x = ResolveMajorResponse{}
-	mi := &file_engine_proto_msgTypes[61]
+	mi := &file_engine_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3591,7 +3838,7 @@ func (x *ResolveMajorResponse) String() string {
 func (*ResolveMajorResponse) ProtoMessage() {}
 
 func (x *ResolveMajorResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[61]
+	mi := &file_engine_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3604,7 +3851,7 @@ func (x *ResolveMajorResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveMajorResponse.ProtoReflect.Descriptor instead.
 func (*ResolveMajorResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{61}
+	return file_engine_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *ResolveMajorResponse) GetFull() string {
@@ -3626,7 +3873,7 @@ type EnsureRequest struct {
 
 func (x *EnsureRequest) Reset() {
 	*x = EnsureRequest{}
-	mi := &file_engine_proto_msgTypes[62]
+	mi := &file_engine_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3638,7 +3885,7 @@ func (x *EnsureRequest) String() string {
 func (*EnsureRequest) ProtoMessage() {}
 
 func (x *EnsureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[62]
+	mi := &file_engine_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3651,7 +3898,7 @@ func (x *EnsureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnsureRequest.ProtoReflect.Descriptor instead.
 func (*EnsureRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{62}
+	return file_engine_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *EnsureRequest) GetEngine() string {
@@ -3692,7 +3939,7 @@ type EnsureResponse struct {
 
 func (x *EnsureResponse) Reset() {
 	*x = EnsureResponse{}
-	mi := &file_engine_proto_msgTypes[63]
+	mi := &file_engine_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3704,7 +3951,7 @@ func (x *EnsureResponse) String() string {
 func (*EnsureResponse) ProtoMessage() {}
 
 func (x *EnsureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[63]
+	mi := &file_engine_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3717,7 +3964,7 @@ func (x *EnsureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnsureResponse.ProtoReflect.Descriptor instead.
 func (*EnsureResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{63}
+	return file_engine_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *EnsureResponse) GetBinDir() string {
@@ -3841,7 +4088,24 @@ const file_engine_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"$\n" +
 	"\x0eDecodeResponse\x12\x12\n" +
-	"\x04spec\x18\x01 \x01(\fR\x04spec\"\xa5\x01\n" +
+	"\x04spec\x18\x01 \x01(\fR\x04spec\"P\n" +
+	"\x11DecodeDiagnostics\x12;\n" +
+	"\vdiagnostics\x18\x01 \x03(\v2\x19.dozeplugin.v1.DiagnosticR\vdiagnostics\"\xc4\x01\n" +
+	"\n" +
+	"Diagnostic\x12\x18\n" +
+	"\awarning\x18\x01 \x01(\bR\awarning\x12\x18\n" +
+	"\asummary\x18\x02 \x01(\tR\asummary\x12\x16\n" +
+	"\x06detail\x18\x03 \x01(\tR\x06detail\x124\n" +
+	"\asubject\x18\x04 \x01(\v2\x1a.dozeplugin.v1.SourceRangeR\asubject\x124\n" +
+	"\acontext\x18\x05 \x01(\v2\x1a.dozeplugin.v1.SourceRangeR\acontext\"\x85\x01\n" +
+	"\vSourceRange\x12\x1a\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12.\n" +
+	"\x05start\x18\x02 \x01(\v2\x18.dozeplugin.v1.SourcePosR\x05start\x12*\n" +
+	"\x03end\x18\x03 \x01(\v2\x18.dozeplugin.v1.SourcePosR\x03end\"K\n" +
+	"\tSourcePos\x12\x12\n" +
+	"\x04line\x18\x01 \x01(\x03R\x04line\x12\x16\n" +
+	"\x06column\x18\x02 \x01(\x03R\x06column\x12\x12\n" +
+	"\x04byte\x18\x03 \x01(\x03R\x04byte\"\xa5\x01\n" +
 	"\x0eResolveRequest\x12\x12\n" +
 	"\x04spec\x18\x01 \x01(\tR\x04spec\x123\n" +
 	"\bplatform\x18\x02 \x01(\v2\x17.dozeplugin.v1.PlatformR\bplatform\x120\n" +
@@ -4064,7 +4328,7 @@ func file_engine_proto_rawDescGZIP() []byte {
 	return file_engine_proto_rawDescData
 }
 
-var file_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 71)
+var file_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 75)
 var file_engine_proto_goTypes = []any{
 	(*Empty)(nil),                 // 0: dozeplugin.v1.Empty
 	(*Platform)(nil),              // 1: dozeplugin.v1.Platform
@@ -4083,182 +4347,191 @@ var file_engine_proto_goTypes = []any{
 	(*CapabilitiesResponse)(nil),  // 14: dozeplugin.v1.CapabilitiesResponse
 	(*DecodeRequest)(nil),         // 15: dozeplugin.v1.DecodeRequest
 	(*DecodeResponse)(nil),        // 16: dozeplugin.v1.DecodeResponse
-	(*ResolveRequest)(nil),        // 17: dozeplugin.v1.ResolveRequest
-	(*ResolveResponse)(nil),       // 18: dozeplugin.v1.ResolveResponse
-	(*ProvisionRequest)(nil),      // 19: dozeplugin.v1.ProvisionRequest
-	(*ProvisionedRequest)(nil),    // 20: dozeplugin.v1.ProvisionedRequest
-	(*ProvisionedResponse)(nil),   // 21: dozeplugin.v1.ProvisionedResponse
-	(*BackendSocketRequest)(nil),  // 22: dozeplugin.v1.BackendSocketRequest
-	(*BackendSocketResponse)(nil), // 23: dozeplugin.v1.BackendSocketResponse
-	(*ConnStringRequest)(nil),     // 24: dozeplugin.v1.ConnStringRequest
-	(*ConnStringResponse)(nil),    // 25: dozeplugin.v1.ConnStringResponse
-	(*PlanRequest)(nil),           // 26: dozeplugin.v1.PlanRequest
-	(*EnsureTemplateRequest)(nil), // 27: dozeplugin.v1.EnsureTemplateRequest
-	(*CloneTemplateRequest)(nil),  // 28: dozeplugin.v1.CloneTemplateRequest
-	(*WireAddrResponse)(nil),      // 29: dozeplugin.v1.WireAddrResponse
-	(*ConvergeRequest)(nil),       // 30: dozeplugin.v1.ConvergeRequest
-	(*ObjectsRequest)(nil),        // 31: dozeplugin.v1.ObjectsRequest
-	(*ObjectsResponse)(nil),       // 32: dozeplugin.v1.ObjectsResponse
-	(*PruneRequest)(nil),          // 33: dozeplugin.v1.PruneRequest
-	(*AttributesRequest)(nil),     // 34: dozeplugin.v1.AttributesRequest
-	(*AttributesResponse)(nil),    // 35: dozeplugin.v1.AttributesResponse
-	(*BackendURLRequest)(nil),     // 36: dozeplugin.v1.BackendURLRequest
-	(*BackendURLResponse)(nil),    // 37: dozeplugin.v1.BackendURLResponse
-	(*SupervisedRequest)(nil),     // 38: dozeplugin.v1.SupervisedRequest
-	(*SupervisedResponse)(nil),    // 39: dozeplugin.v1.SupervisedResponse
-	(*HookRequest)(nil),           // 40: dozeplugin.v1.HookRequest
-	(*HealthRequest)(nil),         // 41: dozeplugin.v1.HealthRequest
-	(*RestartPolicyRequest)(nil),  // 42: dozeplugin.v1.RestartPolicyRequest
-	(*AddrRequest)(nil),           // 43: dozeplugin.v1.AddrRequest
-	(*AddrResponse)(nil),          // 44: dozeplugin.v1.AddrResponse
-	(*Resource)(nil),              // 45: dozeplugin.v1.Resource
-	(*Action)(nil),                // 46: dozeplugin.v1.Action
-	(*ActionsResponse)(nil),       // 47: dozeplugin.v1.ActionsResponse
-	(*ResourcesRequest)(nil),      // 48: dozeplugin.v1.ResourcesRequest
-	(*ResourcesResponse)(nil),     // 49: dozeplugin.v1.ResourcesResponse
-	(*RunActionRequest)(nil),      // 50: dozeplugin.v1.RunActionRequest
-	(*RunActionResponse)(nil),     // 51: dozeplugin.v1.RunActionResponse
-	(*ConsoleColumn)(nil),         // 52: dozeplugin.v1.ConsoleColumn
-	(*ConsolePanel)(nil),          // 53: dozeplugin.v1.ConsolePanel
-	(*ConsoleNode)(nil),           // 54: dozeplugin.v1.ConsoleNode
-	(*ConsoleTab)(nil),            // 55: dozeplugin.v1.ConsoleTab
-	(*ConsoleExtension)(nil),      // 56: dozeplugin.v1.ConsoleExtension
-	(*ConsoleSpec)(nil),           // 57: dozeplugin.v1.ConsoleSpec
-	(*ConsoleRow)(nil),            // 58: dozeplugin.v1.ConsoleRow
-	(*TailRequest)(nil),           // 59: dozeplugin.v1.TailRequest
-	(*ResolveMajorRequest)(nil),   // 60: dozeplugin.v1.ResolveMajorRequest
-	(*ResolveMajorResponse)(nil),  // 61: dozeplugin.v1.ResolveMajorResponse
-	(*EnsureRequest)(nil),         // 62: dozeplugin.v1.EnsureRequest
-	(*EnsureResponse)(nil),        // 63: dozeplugin.v1.EnsureResponse
-	nil,                           // 64: dozeplugin.v1.Toolchain.ToolsEntry
-	nil,                           // 65: dozeplugin.v1.Pin.HashesEntry
-	nil,                           // 66: dozeplugin.v1.Instance.DepsEntry
-	nil,                           // 67: dozeplugin.v1.DecodeRequest.VariablesEntry
-	nil,                           // 68: dozeplugin.v1.AttributesResponse.AttrsEntry
-	nil,                           // 69: dozeplugin.v1.Resource.InfoEntry
-	nil,                           // 70: dozeplugin.v1.ConsoleRow.CellsEntry
+	(*DecodeDiagnostics)(nil),     // 17: dozeplugin.v1.DecodeDiagnostics
+	(*Diagnostic)(nil),            // 18: dozeplugin.v1.Diagnostic
+	(*SourceRange)(nil),           // 19: dozeplugin.v1.SourceRange
+	(*SourcePos)(nil),             // 20: dozeplugin.v1.SourcePos
+	(*ResolveRequest)(nil),        // 21: dozeplugin.v1.ResolveRequest
+	(*ResolveResponse)(nil),       // 22: dozeplugin.v1.ResolveResponse
+	(*ProvisionRequest)(nil),      // 23: dozeplugin.v1.ProvisionRequest
+	(*ProvisionedRequest)(nil),    // 24: dozeplugin.v1.ProvisionedRequest
+	(*ProvisionedResponse)(nil),   // 25: dozeplugin.v1.ProvisionedResponse
+	(*BackendSocketRequest)(nil),  // 26: dozeplugin.v1.BackendSocketRequest
+	(*BackendSocketResponse)(nil), // 27: dozeplugin.v1.BackendSocketResponse
+	(*ConnStringRequest)(nil),     // 28: dozeplugin.v1.ConnStringRequest
+	(*ConnStringResponse)(nil),    // 29: dozeplugin.v1.ConnStringResponse
+	(*PlanRequest)(nil),           // 30: dozeplugin.v1.PlanRequest
+	(*EnsureTemplateRequest)(nil), // 31: dozeplugin.v1.EnsureTemplateRequest
+	(*CloneTemplateRequest)(nil),  // 32: dozeplugin.v1.CloneTemplateRequest
+	(*WireAddrResponse)(nil),      // 33: dozeplugin.v1.WireAddrResponse
+	(*ConvergeRequest)(nil),       // 34: dozeplugin.v1.ConvergeRequest
+	(*ObjectsRequest)(nil),        // 35: dozeplugin.v1.ObjectsRequest
+	(*ObjectsResponse)(nil),       // 36: dozeplugin.v1.ObjectsResponse
+	(*PruneRequest)(nil),          // 37: dozeplugin.v1.PruneRequest
+	(*AttributesRequest)(nil),     // 38: dozeplugin.v1.AttributesRequest
+	(*AttributesResponse)(nil),    // 39: dozeplugin.v1.AttributesResponse
+	(*BackendURLRequest)(nil),     // 40: dozeplugin.v1.BackendURLRequest
+	(*BackendURLResponse)(nil),    // 41: dozeplugin.v1.BackendURLResponse
+	(*SupervisedRequest)(nil),     // 42: dozeplugin.v1.SupervisedRequest
+	(*SupervisedResponse)(nil),    // 43: dozeplugin.v1.SupervisedResponse
+	(*HookRequest)(nil),           // 44: dozeplugin.v1.HookRequest
+	(*HealthRequest)(nil),         // 45: dozeplugin.v1.HealthRequest
+	(*RestartPolicyRequest)(nil),  // 46: dozeplugin.v1.RestartPolicyRequest
+	(*AddrRequest)(nil),           // 47: dozeplugin.v1.AddrRequest
+	(*AddrResponse)(nil),          // 48: dozeplugin.v1.AddrResponse
+	(*Resource)(nil),              // 49: dozeplugin.v1.Resource
+	(*Action)(nil),                // 50: dozeplugin.v1.Action
+	(*ActionsResponse)(nil),       // 51: dozeplugin.v1.ActionsResponse
+	(*ResourcesRequest)(nil),      // 52: dozeplugin.v1.ResourcesRequest
+	(*ResourcesResponse)(nil),     // 53: dozeplugin.v1.ResourcesResponse
+	(*RunActionRequest)(nil),      // 54: dozeplugin.v1.RunActionRequest
+	(*RunActionResponse)(nil),     // 55: dozeplugin.v1.RunActionResponse
+	(*ConsoleColumn)(nil),         // 56: dozeplugin.v1.ConsoleColumn
+	(*ConsolePanel)(nil),          // 57: dozeplugin.v1.ConsolePanel
+	(*ConsoleNode)(nil),           // 58: dozeplugin.v1.ConsoleNode
+	(*ConsoleTab)(nil),            // 59: dozeplugin.v1.ConsoleTab
+	(*ConsoleExtension)(nil),      // 60: dozeplugin.v1.ConsoleExtension
+	(*ConsoleSpec)(nil),           // 61: dozeplugin.v1.ConsoleSpec
+	(*ConsoleRow)(nil),            // 62: dozeplugin.v1.ConsoleRow
+	(*TailRequest)(nil),           // 63: dozeplugin.v1.TailRequest
+	(*ResolveMajorRequest)(nil),   // 64: dozeplugin.v1.ResolveMajorRequest
+	(*ResolveMajorResponse)(nil),  // 65: dozeplugin.v1.ResolveMajorResponse
+	(*EnsureRequest)(nil),         // 66: dozeplugin.v1.EnsureRequest
+	(*EnsureResponse)(nil),        // 67: dozeplugin.v1.EnsureResponse
+	nil,                           // 68: dozeplugin.v1.Toolchain.ToolsEntry
+	nil,                           // 69: dozeplugin.v1.Pin.HashesEntry
+	nil,                           // 70: dozeplugin.v1.Instance.DepsEntry
+	nil,                           // 71: dozeplugin.v1.DecodeRequest.VariablesEntry
+	nil,                           // 72: dozeplugin.v1.AttributesResponse.AttrsEntry
+	nil,                           // 73: dozeplugin.v1.Resource.InfoEntry
+	nil,                           // 74: dozeplugin.v1.ConsoleRow.CellsEntry
 }
 var file_engine_proto_depIdxs = []int32{
-	64, // 0: dozeplugin.v1.Toolchain.tools:type_name -> dozeplugin.v1.Toolchain.ToolsEntry
-	65, // 1: dozeplugin.v1.Pin.hashes:type_name -> dozeplugin.v1.Pin.HashesEntry
+	68, // 0: dozeplugin.v1.Toolchain.tools:type_name -> dozeplugin.v1.Toolchain.ToolsEntry
+	69, // 1: dozeplugin.v1.Pin.hashes:type_name -> dozeplugin.v1.Pin.HashesEntry
 	3,  // 2: dozeplugin.v1.LockEntry.pin:type_name -> dozeplugin.v1.Pin
 	5,  // 3: dozeplugin.v1.Instance.endpoint:type_name -> dozeplugin.v1.Endpoint
-	66, // 4: dozeplugin.v1.Instance.deps:type_name -> dozeplugin.v1.Instance.DepsEntry
+	70, // 4: dozeplugin.v1.Instance.deps:type_name -> dozeplugin.v1.Instance.DepsEntry
 	2,  // 5: dozeplugin.v1.Instance.toolchain:type_name -> dozeplugin.v1.Toolchain
 	8,  // 6: dozeplugin.v1.SpawnSpec.ready:type_name -> dozeplugin.v1.Ready
 	9,  // 7: dozeplugin.v1.SpawnPlan.specs:type_name -> dozeplugin.v1.SpawnSpec
-	67, // 8: dozeplugin.v1.DecodeRequest.variables:type_name -> dozeplugin.v1.DecodeRequest.VariablesEntry
-	1,  // 9: dozeplugin.v1.ResolveRequest.platform:type_name -> dozeplugin.v1.Platform
-	4,  // 10: dozeplugin.v1.ResolveRequest.locked:type_name -> dozeplugin.v1.LockEntry
-	2,  // 11: dozeplugin.v1.ResolveResponse.toolchain:type_name -> dozeplugin.v1.Toolchain
-	4,  // 12: dozeplugin.v1.ResolveResponse.recorded:type_name -> dozeplugin.v1.LockEntry
-	7,  // 13: dozeplugin.v1.ProvisionRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 14: dozeplugin.v1.ProvisionRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	7,  // 15: dozeplugin.v1.ConnStringRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 16: dozeplugin.v1.ConnStringRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	7,  // 17: dozeplugin.v1.PlanRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 18: dozeplugin.v1.PlanRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	2,  // 19: dozeplugin.v1.EnsureTemplateRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	7,  // 20: dozeplugin.v1.ConvergeRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 21: dozeplugin.v1.ConvergeRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	5,  // 22: dozeplugin.v1.ConvergeRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	7,  // 23: dozeplugin.v1.ObjectsRequest.instance:type_name -> dozeplugin.v1.Instance
-	12, // 24: dozeplugin.v1.ObjectsResponse.objects:type_name -> dozeplugin.v1.Object
-	7,  // 25: dozeplugin.v1.PruneRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 26: dozeplugin.v1.PruneRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	5,  // 27: dozeplugin.v1.PruneRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	12, // 28: dozeplugin.v1.PruneRequest.removed:type_name -> dozeplugin.v1.Object
-	7,  // 29: dozeplugin.v1.AttributesRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 30: dozeplugin.v1.AttributesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	68, // 31: dozeplugin.v1.AttributesResponse.attrs:type_name -> dozeplugin.v1.AttributesResponse.AttrsEntry
-	7,  // 32: dozeplugin.v1.BackendURLRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 33: dozeplugin.v1.SupervisedRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 34: dozeplugin.v1.HookRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 35: dozeplugin.v1.HealthRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 36: dozeplugin.v1.RestartPolicyRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 37: dozeplugin.v1.AddrRequest.instance:type_name -> dozeplugin.v1.Instance
-	69, // 38: dozeplugin.v1.Resource.info:type_name -> dozeplugin.v1.Resource.InfoEntry
-	46, // 39: dozeplugin.v1.ActionsResponse.actions:type_name -> dozeplugin.v1.Action
-	7,  // 40: dozeplugin.v1.ResourcesRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 41: dozeplugin.v1.ResourcesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	45, // 42: dozeplugin.v1.ResourcesResponse.resources:type_name -> dozeplugin.v1.Resource
-	7,  // 43: dozeplugin.v1.RunActionRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 44: dozeplugin.v1.RunActionRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	52, // 45: dozeplugin.v1.ConsolePanel.columns:type_name -> dozeplugin.v1.ConsoleColumn
-	54, // 46: dozeplugin.v1.ConsoleNode.children:type_name -> dozeplugin.v1.ConsoleNode
-	54, // 47: dozeplugin.v1.ConsoleTab.body:type_name -> dozeplugin.v1.ConsoleNode
-	54, // 48: dozeplugin.v1.ConsoleExtension.node:type_name -> dozeplugin.v1.ConsoleNode
-	53, // 49: dozeplugin.v1.ConsoleSpec.panels:type_name -> dozeplugin.v1.ConsolePanel
-	55, // 50: dozeplugin.v1.ConsoleSpec.tabs:type_name -> dozeplugin.v1.ConsoleTab
-	56, // 51: dozeplugin.v1.ConsoleSpec.extend:type_name -> dozeplugin.v1.ConsoleExtension
-	70, // 52: dozeplugin.v1.ConsoleRow.cells:type_name -> dozeplugin.v1.ConsoleRow.CellsEntry
-	7,  // 53: dozeplugin.v1.TailRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 54: dozeplugin.v1.TailRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	1,  // 55: dozeplugin.v1.EnsureRequest.platform:type_name -> dozeplugin.v1.Platform
-	6,  // 56: dozeplugin.v1.Instance.DepsEntry.value:type_name -> dozeplugin.v1.Dep
-	0,  // 57: dozeplugin.v1.Engine.Type:input_type -> dozeplugin.v1.Empty
-	0,  // 58: dozeplugin.v1.Engine.Capabilities:input_type -> dozeplugin.v1.Empty
-	15, // 59: dozeplugin.v1.Engine.DecodeConfig:input_type -> dozeplugin.v1.DecodeRequest
-	17, // 60: dozeplugin.v1.Engine.Resolve:input_type -> dozeplugin.v1.ResolveRequest
-	19, // 61: dozeplugin.v1.Engine.Provision:input_type -> dozeplugin.v1.ProvisionRequest
-	20, // 62: dozeplugin.v1.Engine.Provisioned:input_type -> dozeplugin.v1.ProvisionedRequest
-	22, // 63: dozeplugin.v1.Engine.BackendSocket:input_type -> dozeplugin.v1.BackendSocketRequest
-	24, // 64: dozeplugin.v1.Engine.ConnString:input_type -> dozeplugin.v1.ConnStringRequest
-	26, // 65: dozeplugin.v1.Engine.Plan:input_type -> dozeplugin.v1.PlanRequest
-	30, // 66: dozeplugin.v1.Engine.Converge:input_type -> dozeplugin.v1.ConvergeRequest
-	31, // 67: dozeplugin.v1.Engine.Objects:input_type -> dozeplugin.v1.ObjectsRequest
-	33, // 68: dozeplugin.v1.Engine.Prune:input_type -> dozeplugin.v1.PruneRequest
-	34, // 69: dozeplugin.v1.Engine.Attributes:input_type -> dozeplugin.v1.AttributesRequest
-	36, // 70: dozeplugin.v1.Engine.BackendURL:input_type -> dozeplugin.v1.BackendURLRequest
-	38, // 71: dozeplugin.v1.Engine.Supervised:input_type -> dozeplugin.v1.SupervisedRequest
-	40, // 72: dozeplugin.v1.Engine.Hook:input_type -> dozeplugin.v1.HookRequest
-	41, // 73: dozeplugin.v1.Engine.CheckHealth:input_type -> dozeplugin.v1.HealthRequest
-	42, // 74: dozeplugin.v1.Engine.RestartPolicy:input_type -> dozeplugin.v1.RestartPolicyRequest
-	43, // 75: dozeplugin.v1.Engine.AdvertisedAddr:input_type -> dozeplugin.v1.AddrRequest
-	27, // 76: dozeplugin.v1.Engine.EnsureTemplate:input_type -> dozeplugin.v1.EnsureTemplateRequest
-	28, // 77: dozeplugin.v1.Engine.CloneTemplate:input_type -> dozeplugin.v1.CloneTemplateRequest
-	0,  // 78: dozeplugin.v1.Engine.WireAddr:input_type -> dozeplugin.v1.Empty
-	0,  // 79: dozeplugin.v1.Engine.Actions:input_type -> dozeplugin.v1.Empty
-	48, // 80: dozeplugin.v1.Engine.Resources:input_type -> dozeplugin.v1.ResourcesRequest
-	50, // 81: dozeplugin.v1.Engine.RunAction:input_type -> dozeplugin.v1.RunActionRequest
-	0,  // 82: dozeplugin.v1.Engine.DescribeConsole:input_type -> dozeplugin.v1.Empty
-	59, // 83: dozeplugin.v1.Engine.Tail:input_type -> dozeplugin.v1.TailRequest
-	60, // 84: dozeplugin.v1.Fetcher.ResolveMajor:input_type -> dozeplugin.v1.ResolveMajorRequest
-	62, // 85: dozeplugin.v1.Fetcher.Ensure:input_type -> dozeplugin.v1.EnsureRequest
-	13, // 86: dozeplugin.v1.Engine.Type:output_type -> dozeplugin.v1.TypeResponse
-	14, // 87: dozeplugin.v1.Engine.Capabilities:output_type -> dozeplugin.v1.CapabilitiesResponse
-	16, // 88: dozeplugin.v1.Engine.DecodeConfig:output_type -> dozeplugin.v1.DecodeResponse
-	18, // 89: dozeplugin.v1.Engine.Resolve:output_type -> dozeplugin.v1.ResolveResponse
-	0,  // 90: dozeplugin.v1.Engine.Provision:output_type -> dozeplugin.v1.Empty
-	21, // 91: dozeplugin.v1.Engine.Provisioned:output_type -> dozeplugin.v1.ProvisionedResponse
-	23, // 92: dozeplugin.v1.Engine.BackendSocket:output_type -> dozeplugin.v1.BackendSocketResponse
-	25, // 93: dozeplugin.v1.Engine.ConnString:output_type -> dozeplugin.v1.ConnStringResponse
-	10, // 94: dozeplugin.v1.Engine.Plan:output_type -> dozeplugin.v1.SpawnPlan
-	0,  // 95: dozeplugin.v1.Engine.Converge:output_type -> dozeplugin.v1.Empty
-	32, // 96: dozeplugin.v1.Engine.Objects:output_type -> dozeplugin.v1.ObjectsResponse
-	0,  // 97: dozeplugin.v1.Engine.Prune:output_type -> dozeplugin.v1.Empty
-	35, // 98: dozeplugin.v1.Engine.Attributes:output_type -> dozeplugin.v1.AttributesResponse
-	37, // 99: dozeplugin.v1.Engine.BackendURL:output_type -> dozeplugin.v1.BackendURLResponse
-	39, // 100: dozeplugin.v1.Engine.Supervised:output_type -> dozeplugin.v1.SupervisedResponse
-	0,  // 101: dozeplugin.v1.Engine.Hook:output_type -> dozeplugin.v1.Empty
-	0,  // 102: dozeplugin.v1.Engine.CheckHealth:output_type -> dozeplugin.v1.Empty
-	11, // 103: dozeplugin.v1.Engine.RestartPolicy:output_type -> dozeplugin.v1.RestartSpec
-	44, // 104: dozeplugin.v1.Engine.AdvertisedAddr:output_type -> dozeplugin.v1.AddrResponse
-	0,  // 105: dozeplugin.v1.Engine.EnsureTemplate:output_type -> dozeplugin.v1.Empty
-	0,  // 106: dozeplugin.v1.Engine.CloneTemplate:output_type -> dozeplugin.v1.Empty
-	29, // 107: dozeplugin.v1.Engine.WireAddr:output_type -> dozeplugin.v1.WireAddrResponse
-	47, // 108: dozeplugin.v1.Engine.Actions:output_type -> dozeplugin.v1.ActionsResponse
-	49, // 109: dozeplugin.v1.Engine.Resources:output_type -> dozeplugin.v1.ResourcesResponse
-	51, // 110: dozeplugin.v1.Engine.RunAction:output_type -> dozeplugin.v1.RunActionResponse
-	57, // 111: dozeplugin.v1.Engine.DescribeConsole:output_type -> dozeplugin.v1.ConsoleSpec
-	58, // 112: dozeplugin.v1.Engine.Tail:output_type -> dozeplugin.v1.ConsoleRow
-	61, // 113: dozeplugin.v1.Fetcher.ResolveMajor:output_type -> dozeplugin.v1.ResolveMajorResponse
-	63, // 114: dozeplugin.v1.Fetcher.Ensure:output_type -> dozeplugin.v1.EnsureResponse
-	86, // [86:115] is the sub-list for method output_type
-	57, // [57:86] is the sub-list for method input_type
-	57, // [57:57] is the sub-list for extension type_name
-	57, // [57:57] is the sub-list for extension extendee
-	0,  // [0:57] is the sub-list for field type_name
+	71, // 8: dozeplugin.v1.DecodeRequest.variables:type_name -> dozeplugin.v1.DecodeRequest.VariablesEntry
+	18, // 9: dozeplugin.v1.DecodeDiagnostics.diagnostics:type_name -> dozeplugin.v1.Diagnostic
+	19, // 10: dozeplugin.v1.Diagnostic.subject:type_name -> dozeplugin.v1.SourceRange
+	19, // 11: dozeplugin.v1.Diagnostic.context:type_name -> dozeplugin.v1.SourceRange
+	20, // 12: dozeplugin.v1.SourceRange.start:type_name -> dozeplugin.v1.SourcePos
+	20, // 13: dozeplugin.v1.SourceRange.end:type_name -> dozeplugin.v1.SourcePos
+	1,  // 14: dozeplugin.v1.ResolveRequest.platform:type_name -> dozeplugin.v1.Platform
+	4,  // 15: dozeplugin.v1.ResolveRequest.locked:type_name -> dozeplugin.v1.LockEntry
+	2,  // 16: dozeplugin.v1.ResolveResponse.toolchain:type_name -> dozeplugin.v1.Toolchain
+	4,  // 17: dozeplugin.v1.ResolveResponse.recorded:type_name -> dozeplugin.v1.LockEntry
+	7,  // 18: dozeplugin.v1.ProvisionRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 19: dozeplugin.v1.ProvisionRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	7,  // 20: dozeplugin.v1.ConnStringRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 21: dozeplugin.v1.ConnStringRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	7,  // 22: dozeplugin.v1.PlanRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 23: dozeplugin.v1.PlanRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	2,  // 24: dozeplugin.v1.EnsureTemplateRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	7,  // 25: dozeplugin.v1.ConvergeRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 26: dozeplugin.v1.ConvergeRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	5,  // 27: dozeplugin.v1.ConvergeRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	7,  // 28: dozeplugin.v1.ObjectsRequest.instance:type_name -> dozeplugin.v1.Instance
+	12, // 29: dozeplugin.v1.ObjectsResponse.objects:type_name -> dozeplugin.v1.Object
+	7,  // 30: dozeplugin.v1.PruneRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 31: dozeplugin.v1.PruneRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	5,  // 32: dozeplugin.v1.PruneRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	12, // 33: dozeplugin.v1.PruneRequest.removed:type_name -> dozeplugin.v1.Object
+	7,  // 34: dozeplugin.v1.AttributesRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 35: dozeplugin.v1.AttributesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	72, // 36: dozeplugin.v1.AttributesResponse.attrs:type_name -> dozeplugin.v1.AttributesResponse.AttrsEntry
+	7,  // 37: dozeplugin.v1.BackendURLRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 38: dozeplugin.v1.SupervisedRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 39: dozeplugin.v1.HookRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 40: dozeplugin.v1.HealthRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 41: dozeplugin.v1.RestartPolicyRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 42: dozeplugin.v1.AddrRequest.instance:type_name -> dozeplugin.v1.Instance
+	73, // 43: dozeplugin.v1.Resource.info:type_name -> dozeplugin.v1.Resource.InfoEntry
+	50, // 44: dozeplugin.v1.ActionsResponse.actions:type_name -> dozeplugin.v1.Action
+	7,  // 45: dozeplugin.v1.ResourcesRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 46: dozeplugin.v1.ResourcesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	49, // 47: dozeplugin.v1.ResourcesResponse.resources:type_name -> dozeplugin.v1.Resource
+	7,  // 48: dozeplugin.v1.RunActionRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 49: dozeplugin.v1.RunActionRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	56, // 50: dozeplugin.v1.ConsolePanel.columns:type_name -> dozeplugin.v1.ConsoleColumn
+	58, // 51: dozeplugin.v1.ConsoleNode.children:type_name -> dozeplugin.v1.ConsoleNode
+	58, // 52: dozeplugin.v1.ConsoleTab.body:type_name -> dozeplugin.v1.ConsoleNode
+	58, // 53: dozeplugin.v1.ConsoleExtension.node:type_name -> dozeplugin.v1.ConsoleNode
+	57, // 54: dozeplugin.v1.ConsoleSpec.panels:type_name -> dozeplugin.v1.ConsolePanel
+	59, // 55: dozeplugin.v1.ConsoleSpec.tabs:type_name -> dozeplugin.v1.ConsoleTab
+	60, // 56: dozeplugin.v1.ConsoleSpec.extend:type_name -> dozeplugin.v1.ConsoleExtension
+	74, // 57: dozeplugin.v1.ConsoleRow.cells:type_name -> dozeplugin.v1.ConsoleRow.CellsEntry
+	7,  // 58: dozeplugin.v1.TailRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 59: dozeplugin.v1.TailRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	1,  // 60: dozeplugin.v1.EnsureRequest.platform:type_name -> dozeplugin.v1.Platform
+	6,  // 61: dozeplugin.v1.Instance.DepsEntry.value:type_name -> dozeplugin.v1.Dep
+	0,  // 62: dozeplugin.v1.Engine.Type:input_type -> dozeplugin.v1.Empty
+	0,  // 63: dozeplugin.v1.Engine.Capabilities:input_type -> dozeplugin.v1.Empty
+	15, // 64: dozeplugin.v1.Engine.DecodeConfig:input_type -> dozeplugin.v1.DecodeRequest
+	21, // 65: dozeplugin.v1.Engine.Resolve:input_type -> dozeplugin.v1.ResolveRequest
+	23, // 66: dozeplugin.v1.Engine.Provision:input_type -> dozeplugin.v1.ProvisionRequest
+	24, // 67: dozeplugin.v1.Engine.Provisioned:input_type -> dozeplugin.v1.ProvisionedRequest
+	26, // 68: dozeplugin.v1.Engine.BackendSocket:input_type -> dozeplugin.v1.BackendSocketRequest
+	28, // 69: dozeplugin.v1.Engine.ConnString:input_type -> dozeplugin.v1.ConnStringRequest
+	30, // 70: dozeplugin.v1.Engine.Plan:input_type -> dozeplugin.v1.PlanRequest
+	34, // 71: dozeplugin.v1.Engine.Converge:input_type -> dozeplugin.v1.ConvergeRequest
+	35, // 72: dozeplugin.v1.Engine.Objects:input_type -> dozeplugin.v1.ObjectsRequest
+	37, // 73: dozeplugin.v1.Engine.Prune:input_type -> dozeplugin.v1.PruneRequest
+	38, // 74: dozeplugin.v1.Engine.Attributes:input_type -> dozeplugin.v1.AttributesRequest
+	40, // 75: dozeplugin.v1.Engine.BackendURL:input_type -> dozeplugin.v1.BackendURLRequest
+	42, // 76: dozeplugin.v1.Engine.Supervised:input_type -> dozeplugin.v1.SupervisedRequest
+	44, // 77: dozeplugin.v1.Engine.Hook:input_type -> dozeplugin.v1.HookRequest
+	45, // 78: dozeplugin.v1.Engine.CheckHealth:input_type -> dozeplugin.v1.HealthRequest
+	46, // 79: dozeplugin.v1.Engine.RestartPolicy:input_type -> dozeplugin.v1.RestartPolicyRequest
+	47, // 80: dozeplugin.v1.Engine.AdvertisedAddr:input_type -> dozeplugin.v1.AddrRequest
+	31, // 81: dozeplugin.v1.Engine.EnsureTemplate:input_type -> dozeplugin.v1.EnsureTemplateRequest
+	32, // 82: dozeplugin.v1.Engine.CloneTemplate:input_type -> dozeplugin.v1.CloneTemplateRequest
+	0,  // 83: dozeplugin.v1.Engine.WireAddr:input_type -> dozeplugin.v1.Empty
+	0,  // 84: dozeplugin.v1.Engine.Actions:input_type -> dozeplugin.v1.Empty
+	52, // 85: dozeplugin.v1.Engine.Resources:input_type -> dozeplugin.v1.ResourcesRequest
+	54, // 86: dozeplugin.v1.Engine.RunAction:input_type -> dozeplugin.v1.RunActionRequest
+	0,  // 87: dozeplugin.v1.Engine.DescribeConsole:input_type -> dozeplugin.v1.Empty
+	63, // 88: dozeplugin.v1.Engine.Tail:input_type -> dozeplugin.v1.TailRequest
+	64, // 89: dozeplugin.v1.Fetcher.ResolveMajor:input_type -> dozeplugin.v1.ResolveMajorRequest
+	66, // 90: dozeplugin.v1.Fetcher.Ensure:input_type -> dozeplugin.v1.EnsureRequest
+	13, // 91: dozeplugin.v1.Engine.Type:output_type -> dozeplugin.v1.TypeResponse
+	14, // 92: dozeplugin.v1.Engine.Capabilities:output_type -> dozeplugin.v1.CapabilitiesResponse
+	16, // 93: dozeplugin.v1.Engine.DecodeConfig:output_type -> dozeplugin.v1.DecodeResponse
+	22, // 94: dozeplugin.v1.Engine.Resolve:output_type -> dozeplugin.v1.ResolveResponse
+	0,  // 95: dozeplugin.v1.Engine.Provision:output_type -> dozeplugin.v1.Empty
+	25, // 96: dozeplugin.v1.Engine.Provisioned:output_type -> dozeplugin.v1.ProvisionedResponse
+	27, // 97: dozeplugin.v1.Engine.BackendSocket:output_type -> dozeplugin.v1.BackendSocketResponse
+	29, // 98: dozeplugin.v1.Engine.ConnString:output_type -> dozeplugin.v1.ConnStringResponse
+	10, // 99: dozeplugin.v1.Engine.Plan:output_type -> dozeplugin.v1.SpawnPlan
+	0,  // 100: dozeplugin.v1.Engine.Converge:output_type -> dozeplugin.v1.Empty
+	36, // 101: dozeplugin.v1.Engine.Objects:output_type -> dozeplugin.v1.ObjectsResponse
+	0,  // 102: dozeplugin.v1.Engine.Prune:output_type -> dozeplugin.v1.Empty
+	39, // 103: dozeplugin.v1.Engine.Attributes:output_type -> dozeplugin.v1.AttributesResponse
+	41, // 104: dozeplugin.v1.Engine.BackendURL:output_type -> dozeplugin.v1.BackendURLResponse
+	43, // 105: dozeplugin.v1.Engine.Supervised:output_type -> dozeplugin.v1.SupervisedResponse
+	0,  // 106: dozeplugin.v1.Engine.Hook:output_type -> dozeplugin.v1.Empty
+	0,  // 107: dozeplugin.v1.Engine.CheckHealth:output_type -> dozeplugin.v1.Empty
+	11, // 108: dozeplugin.v1.Engine.RestartPolicy:output_type -> dozeplugin.v1.RestartSpec
+	48, // 109: dozeplugin.v1.Engine.AdvertisedAddr:output_type -> dozeplugin.v1.AddrResponse
+	0,  // 110: dozeplugin.v1.Engine.EnsureTemplate:output_type -> dozeplugin.v1.Empty
+	0,  // 111: dozeplugin.v1.Engine.CloneTemplate:output_type -> dozeplugin.v1.Empty
+	33, // 112: dozeplugin.v1.Engine.WireAddr:output_type -> dozeplugin.v1.WireAddrResponse
+	51, // 113: dozeplugin.v1.Engine.Actions:output_type -> dozeplugin.v1.ActionsResponse
+	53, // 114: dozeplugin.v1.Engine.Resources:output_type -> dozeplugin.v1.ResourcesResponse
+	55, // 115: dozeplugin.v1.Engine.RunAction:output_type -> dozeplugin.v1.RunActionResponse
+	61, // 116: dozeplugin.v1.Engine.DescribeConsole:output_type -> dozeplugin.v1.ConsoleSpec
+	62, // 117: dozeplugin.v1.Engine.Tail:output_type -> dozeplugin.v1.ConsoleRow
+	65, // 118: dozeplugin.v1.Fetcher.ResolveMajor:output_type -> dozeplugin.v1.ResolveMajorResponse
+	67, // 119: dozeplugin.v1.Fetcher.Ensure:output_type -> dozeplugin.v1.EnsureResponse
+	91, // [91:120] is the sub-list for method output_type
+	62, // [62:91] is the sub-list for method input_type
+	62, // [62:62] is the sub-list for extension type_name
+	62, // [62:62] is the sub-list for extension extendee
+	0,  // [0:62] is the sub-list for field type_name
 }
 
 func init() { file_engine_proto_init() }
@@ -4272,7 +4545,7 @@ func file_engine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_engine_proto_rawDesc), len(file_engine_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   71,
+			NumMessages:   75,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

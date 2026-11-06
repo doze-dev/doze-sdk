@@ -17,6 +17,10 @@ keep old modules working with new doze, and new modules working with old doze.
      zero means "the old behaviour", e.g. `boot_budget_ms = 0` keeps the host's
      default.
    - An old peer also ignores a field it doesn't know.
+   - A failed RPC has only its status message on the wire, so structure for an
+     error rides as a status detail, and the message keeps the text it always
+     had: a failed DecodeConfig attaches `DecodeDiagnostics`, which an old
+     host never unpacks.
 3. **A new behaviour is a new capability.**
    - A module advertises what it implements in `Capabilities`, and the host
      calls an optional RPC only if the module advertised it.

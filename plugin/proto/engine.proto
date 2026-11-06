@@ -120,6 +120,28 @@ message DecodeRequest {
 }
 message DecodeResponse { bytes spec = 1; } // the plugin's gob-encoded config
 
+// DecodeDiagnostics rides a failed DecodeConfig as a gRPC status detail, so the
+// host can render the module's errors with file, line and snippet like its
+// own. The status message is unchanged (every diagnostic flattened, one per
+// line): a host that doesn't know the detail ignores it and shows the message,
+// and a host that does falls back to the message when a module sends none.
+message DecodeDiagnostics { repeated Diagnostic diagnostics = 1; }
+message Diagnostic {
+  bool warning = 1;         // false: an error
+  string summary = 2;
+  string detail = 3;
+  SourceRange subject = 4;  // unset: the diagnostic has no position
+  SourceRange context = 5;  // unset: the subject alone is the snippet
+}
+// SourceRange is an hcl.Range in the file the module parsed (DecodeRequest's
+// filename). byte is the offset in the file the host sent.
+message SourceRange {
+  string filename = 1;
+  SourcePos start = 2;
+  SourcePos end = 3;
+}
+message SourcePos { int64 line = 1; int64 column = 2; int64 byte = 3; }
+
 message ResolveRequest {
   string spec = 1;
   Platform platform = 2;

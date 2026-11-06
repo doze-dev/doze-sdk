@@ -338,7 +338,8 @@ func (d *pluginDriver) ConnString(inst engine.Instance, ep engine.Endpoint) (str
 
 // DecodeRemote sends the block's source file + flattened variables + declared
 // engine version to the plugin, which decodes its own config and returns it as
-// opaque gob bytes (a RawSpec).
+// opaque gob bytes (a RawSpec). A rejected block comes back as a *DecodeError
+// when the module sent positioned diagnostics.
 func (d *pluginDriver) DecodeRemote(file []byte, filename, blockType, blockLabel string, vars map[string]cty.Value, baseDir string, version engine.VersionSpec) (any, error) {
 	vj, err := varsToJSON(vars)
 	if err != nil {
@@ -349,7 +350,7 @@ func (d *pluginDriver) DecodeRemote(file []byte, filename, blockType, blockLabel
 		EngineVersion: string(version),
 	})
 	if err != nil {
-		return nil, userError(err)
+		return nil, decodeErrorFrom(err)
 	}
 	return &RawSpec{Bytes: resp.Spec}, nil
 }
