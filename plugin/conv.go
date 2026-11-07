@@ -97,6 +97,49 @@ func endpointFromProto(e *proto.Endpoint) engine.Endpoint {
 	return engine.Endpoint{UnixSocket: e.UnixSocket, TCPAddr: e.TcpAddr, Backend: e.Backend}
 }
 
+func networkToProto(n engine.Network) *proto.NetworkResponse {
+	out := &proto.NetworkResponse{}
+	for _, l := range n.Listeners {
+		out.Listeners = append(out.Listeners, &proto.Listener{Name: l.Name, Port: int32(l.Port), Protocol: string(l.Protocol), Routes: l.Routes})
+	}
+	return out
+}
+
+func networkFromProto(p *proto.NetworkResponse) engine.Network {
+	var n engine.Network
+	for _, l := range p.GetListeners() {
+		n.Listeners = append(n.Listeners, engine.Listener{Name: l.Name, Port: int(l.Port), Protocol: engine.Protocol(l.Protocol), Routes: l.Routes})
+	}
+	return n
+}
+
+// grantToProto is nil for no grant, so an instance without one costs nothing
+// on the wire and arrives as the zero value.
+func grantToProto(g engine.Grant) *proto.Grant {
+	if !g.Named() && len(g.Listeners) == 0 {
+		return nil
+	}
+	out := &proto.Grant{Host: g.Host, Listeners: map[string]*proto.GrantedListener{}}
+	for k, l := range g.Listeners {
+		out.Listeners[k] = &proto.GrantedListener{Addr: l.Addr, Url: l.URL, Hosts: l.Hosts}
+	}
+	return out
+}
+
+func grantFromProto(p *proto.Grant) engine.Grant {
+	if p == nil {
+		return engine.Grant{}
+	}
+	g := engine.Grant{Host: p.Host}
+	if len(p.Listeners) > 0 {
+		g.Listeners = map[string]engine.GrantedListener{}
+		for k, l := range p.Listeners {
+			g.Listeners[k] = engine.GrantedListener{Addr: l.Addr, URL: l.Url, Hosts: l.Hosts}
+		}
+	}
+	return g
+}
+
 func instanceToProto(inst engine.Instance) (*proto.Instance, error) {
 	// A plugin's config is already serialized (RawSpec) — ship it verbatim;
 	// otherwise gob-encode an in-tree value.
@@ -119,6 +162,7 @@ func instanceToProto(inst engine.Instance) (*proto.Instance, error) {
 		DataDir: inst.DataDir, SocketDir: inst.SocketDir, Port: int32(inst.Port),
 		Endpoint: endpointToProto(inst.Endpoint), Spec: spec,
 		Deps: deps, Toolchain: toolchainToProto(inst.Toolchain),
+		Grant: grantToProto(inst.Grant),
 	}, nil
 }
 
@@ -139,6 +183,7 @@ func instanceFromProto(p *proto.Instance) (engine.Instance, error) {
 		DataDir: p.DataDir, SocketDir: p.SocketDir, Port: int(p.Port),
 		Endpoint: endpointFromProto(p.Endpoint), Spec: spec,
 		Deps: deps, Toolchain: toolchainFromProto(p.Toolchain),
+		Grant: grantFromProto(p.Grant),
 	}, nil
 }
 

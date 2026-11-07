@@ -569,6 +569,25 @@ func (d *pluginDriver) AdvertisedAddr(inst engine.Instance) (string, bool) {
 	return resp.Addr, resp.Ok
 }
 
+// Network makes every plugin driver an engine.Networked whose network is empty
+// unless the module advertised capNetworked. The host reads an empty network as
+// engine.DefaultNetwork: one tcp listener on the instance's port.
+func (d *pluginDriver) Network(inst engine.Instance) engine.Network {
+	if !d.has(capNetworked) {
+		return engine.Network{}
+	}
+	pi, err := instanceToProto(inst)
+	if err != nil {
+		return engine.Network{}
+	}
+	resp, err := d.client.Network(context.Background(), &proto.NetworkRequest{Instance: pi})
+	if err != nil {
+		d.report("Network", err)
+		return engine.Network{}
+	}
+	return networkFromProto(resp)
+}
+
 // DescribeConsole makes every admin driver an engine.Console whose spec is empty
 // unless the module advertised capConsole. The host reads an empty spec as
 // "no console": the overview is the front. The answer is static per module

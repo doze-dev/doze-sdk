@@ -44,3 +44,26 @@ func TestTheToolchainTravelsOnTheInstance(t *testing.T) {
 		t.Errorf("psql = %q", got)
 	}
 }
+
+func TestTheGrantTravelsOnTheInstance(t *testing.T) {
+	in := engine.Instance{Name: "events", Type: "kafka", Grant: engine.Grant{Host: "events.shop.doze", Listeners: map[string]engine.GrantedListener{
+		engine.MainListener: {Addr: "events.shop.doze:9092"},
+		"registry":          {Addr: "events.shop.doze:8081", URL: "http://registry.events.shop.doze", Hosts: []string{"registry.events.shop.doze"}},
+	}}}
+	p, err := instanceToProto(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := instanceFromProto(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(in.Grant, out.Grant) {
+		t.Errorf("grant = %+v, want %+v", out.Grant, in.Grant)
+	}
+	// No grant (names off, or an older host): the zero value, not an empty map.
+	p, _ = instanceToProto(engine.Instance{Name: "db"})
+	if out, _ := instanceFromProto(p); out.Grant.Named() || out.Grant.Listeners != nil {
+		t.Errorf("an instance with no grant arrived with %+v", out.Grant)
+	}
+}
