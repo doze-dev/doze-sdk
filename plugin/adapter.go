@@ -571,7 +571,7 @@ func (d *pluginDriver) AdvertisedAddr(inst engine.Instance) (string, bool) {
 
 // Network makes every plugin driver an engine.Networked whose network is empty
 // unless the module advertised capNetworked. The host reads an empty network as
-// engine.DefaultNetwork: one tcp listener on the instance's port.
+// engine.DefaultNetwork: one tcp listener on the declared port.
 func (d *pluginDriver) Network(inst engine.Instance) engine.Network {
 	if !d.has(capNetworked) {
 		return engine.Network{}

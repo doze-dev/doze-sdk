@@ -18,8 +18,8 @@ func TestNetworkProblems(t *testing.T) {
 	inst := engine.Instance{Name: "events", Port: 9092}
 	good := func(i engine.Instance) engine.Network {
 		return engine.Network{Listeners: []engine.Listener{
-			{Name: engine.MainListener, Port: i.Port, Protocol: engine.ProtocolTCP},
-			{Name: "console", Port: i.Port + 1, Protocol: engine.ProtocolHTTP, Routes: []string{"@"}},
+			{Name: engine.MainListener, Protocol: engine.ProtocolTCP},
+			{Name: "console", Port: 9093, Protocol: engine.ProtocolHTTP, Routes: []string{"@"}},
 		}}
 	}
 	if err := networkProblems(netDriver{net: good}, inst); err != nil {
@@ -37,7 +37,7 @@ func TestNetworkProblems(t *testing.T) {
 	n := 0
 	impure := func(i engine.Instance) engine.Network {
 		n++
-		return engine.Network{Listeners: []engine.Listener{{Name: engine.MainListener, Port: i.Port + n, Protocol: engine.ProtocolTCP}}}
+		return engine.Network{Listeners: []engine.Listener{{Name: engine.MainListener, Protocol: engine.ProtocolTCP}, {Name: "ui", Port: 8000 + n, Protocol: engine.ProtocolHTTP}}}
 	}
 	if err := networkProblems(netDriver{net: impure}, inst); err == nil || !strings.Contains(err.Error(), "not the same twice") {
 		t.Errorf("a network that changes between calls: %v", err)

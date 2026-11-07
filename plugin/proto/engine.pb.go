@@ -3938,6 +3938,7 @@ type GrantedListener struct {
 	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
 	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 	Hosts         []string               `protobuf:"bytes,3,rep,name=hosts,proto3" json:"hosts,omitempty"`
+	Backend       string                 `protobuf:"bytes,4,opt,name=backend,proto3" json:"backend,omitempty"` // the unix socket the module listens on for this listener
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3991,6 +3992,13 @@ func (x *GrantedListener) GetHosts() []string {
 		return x.Hosts
 	}
 	return nil
+}
+
+func (x *GrantedListener) GetBackend() string {
+	if x != nil {
+		return x.Backend
+	}
+	return ""
 }
 
 type Grant struct {
@@ -4556,11 +4564,12 @@ const file_engine_proto_rawDesc = "" +
 	"\x0eNetworkRequest\x123\n" +
 	"\binstance\x18\x01 \x01(\v2\x17.dozeplugin.v1.InstanceR\binstance\"H\n" +
 	"\x0fNetworkResponse\x125\n" +
-	"\tlisteners\x18\x01 \x03(\v2\x17.dozeplugin.v1.ListenerR\tlisteners\"M\n" +
+	"\tlisteners\x18\x01 \x03(\v2\x17.dozeplugin.v1.ListenerR\tlisteners\"g\n" +
 	"\x0fGrantedListener\x12\x12\n" +
 	"\x04addr\x18\x01 \x01(\tR\x04addr\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x14\n" +
-	"\x05hosts\x18\x03 \x03(\tR\x05hosts\"\xbc\x01\n" +
+	"\x05hosts\x18\x03 \x03(\tR\x05hosts\x12\x18\n" +
+	"\abackend\x18\x04 \x01(\tR\abackend\"\xbc\x01\n" +
 	"\x05Grant\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12A\n" +
 	"\tlisteners\x18\x02 \x03(\v2#.dozeplugin.v1.Grant.ListenersEntryR\tlisteners\x1a\\\n" +

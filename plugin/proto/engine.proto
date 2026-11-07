@@ -256,6 +256,7 @@ message GrantedListener {
   string addr = 1;
   string url = 2;
   repeated string hosts = 3;
+  string backend = 4; // the unix socket the module listens on for this listener
 }
 message Grant {
   string host = 1;

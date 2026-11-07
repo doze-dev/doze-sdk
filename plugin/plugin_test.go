@@ -260,16 +260,16 @@ func TestNetworkRoundTrip(t *testing.T) {
 	if !ok {
 		t.Fatalf("a plugin driver is an engine.Networked, got %T", h.Driver())
 	}
-	got := nw.Network(engine.Instance{Name: "e1", Port: 7000})
+	got := nw.Network(engine.Instance{Name: "e1"})
 	want := engine.Network{Listeners: []engine.Listener{
-		{Name: engine.MainListener, Port: 7000, Protocol: engine.ProtocolTCP},
+		{Name: engine.MainListener, Protocol: engine.ProtocolTCP},
 		{Name: "ui", Port: 7001, Protocol: engine.ProtocolHTTP, Routes: []string{"@", "api", "sync-@"}},
 	}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("network = %+v, want %+v", got, want)
 	}
 	inst := engine.Instance{Name: "e1", Grant: engine.Grant{Host: "e1.shop.doze", Listeners: map[string]engine.GrantedListener{
-		engine.MainListener: {Addr: "e1.shop.doze:7000"}}}}
+		engine.MainListener: {Addr: "e1.shop.doze:7000", Backend: "/s/echo.sock"}}}}
 	if _, u := h.Driver().ConnString(inst, engine.Endpoint{}); u != "echo://e1.shop.doze:7000" {
 		t.Errorf("ConnString with a grant = %q: the grant did not reach the module", u)
 	}

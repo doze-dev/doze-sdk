@@ -40,12 +40,12 @@ func (driver) ConnString(inst engine.Instance, _ engine.Endpoint) (string, strin
 	return "ECHO_URL", "echo://local"
 }
 
-// Network implements engine.Networked: a tcp main on the instance's port, and an
+// Network implements engine.Networked: a tcp main on the declared port, and an
 // http listener beside it with every shape of route.
-func (driver) Network(inst engine.Instance) engine.Network {
+func (driver) Network(engine.Instance) engine.Network {
 	return engine.Network{Listeners: []engine.Listener{
-		{Name: engine.MainListener, Port: inst.Port, Protocol: engine.ProtocolTCP},
-		{Name: "ui", Port: inst.Port + 1, Protocol: engine.ProtocolHTTP, Routes: []string{"@", "api", "sync-@"}},
+		{Name: engine.MainListener, Protocol: engine.ProtocolTCP},
+		{Name: "ui", Port: 7001, Protocol: engine.ProtocolHTTP, Routes: []string{"@", "api", "sync-@"}},
 	}}
 }
 

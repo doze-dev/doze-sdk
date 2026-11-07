@@ -23,7 +23,7 @@ func CheckNetwork(t testing.TB, drv engine.Driver, inst engine.Instance) {
 func networkProblems(drv engine.Driver, inst engine.Instance) error {
 	nw, ok := drv.(engine.Networked)
 	if !ok {
-		return engine.ValidateNetwork(engine.DefaultNetwork(inst.Port))
+		return engine.ValidateNetwork(engine.DefaultNetwork())
 	}
 	first := nw.Network(inst)
 	if err := engine.ValidateNetwork(first); err != nil {

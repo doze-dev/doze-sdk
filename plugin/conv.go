@@ -121,7 +121,7 @@ func grantToProto(g engine.Grant) *proto.Grant {
 	}
 	out := &proto.Grant{Host: g.Host, Listeners: map[string]*proto.GrantedListener{}}
 	for k, l := range g.Listeners {
-		out.Listeners[k] = &proto.GrantedListener{Addr: l.Addr, Url: l.URL, Hosts: l.Hosts}
+		out.Listeners[k] = &proto.GrantedListener{Addr: l.Addr, Url: l.URL, Hosts: l.Hosts, Backend: l.Backend}
 	}
 	return out
 }
@@ -134,7 +134,7 @@ func grantFromProto(p *proto.Grant) engine.Grant {
 	if len(p.Listeners) > 0 {
 		g.Listeners = map[string]engine.GrantedListener{}
 		for k, l := range p.Listeners {
-			g.Listeners[k] = engine.GrantedListener{Addr: l.Addr, URL: l.Url, Hosts: l.Hosts}
+			g.Listeners[k] = engine.GrantedListener{Addr: l.Addr, URL: l.Url, Hosts: l.Hosts, Backend: l.Backend}
 		}
 	}
 	return g

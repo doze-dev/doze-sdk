@@ -17,6 +17,11 @@ import (
 // is reached at name:port too, and, for each of its Routes, without a port
 // through the host's front door.
 //
+// The host owns every public port: it listens on each, wakes the instance on a
+// connection, and forwards to the listener's backend, a socket the module
+// listens on (Grant's Backend). The main listener's backend is the one
+// BackendSocket names, as for a module without Networked.
+//
 // Network must be a pure function of inst (its Name and Spec): the host calls it
 // without starting anything, to print endpoints and to check a configuration
 // before it runs. What the host actually set up comes back on Instance.Grant.
@@ -54,7 +59,10 @@ type Listener struct {
 	// Name identifies the listener within the instance: "main", "console",
 	// "registry". A DNS label.
 	Name string
-	// Port is the port clients use on the instance's address.
+	// Port is the port clients use on the instance's address. The main
+	// listener's is the instance's declared port (the person's `port`, or the
+	// module's default), which the host sets: leave it 0. Every other listener
+	// names its own.
 	Port int
 	// Protocol is what it speaks.
 	Protocol Protocol
@@ -73,9 +81,9 @@ type Listener struct {
 }
 
 // DefaultNetwork is the network of an instance whose module does not implement
-// Networked: one tcp listener, "main", on port.
-func DefaultNetwork(port int) Network {
-	return Network{Listeners: []Listener{{Name: MainListener, Port: port, Protocol: ProtocolTCP}}}
+// Networked: one tcp listener, "main", on the declared port.
+func DefaultNetwork() Network {
+	return Network{Listeners: []Listener{{Name: MainListener, Protocol: ProtocolTCP}}}
 }
 
 // Listener returns the listener with name.
@@ -156,9 +164,10 @@ func isLabel(s string) bool {
 }
 
 // ValidateNetwork checks a network as the host will: a "main" listener, names
-// that are DNS labels, ports in range and not shared, a known protocol, routes
-// only on http listeners and only in the three shapes, and no route given
-// twice. Every problem is reported.
+// that are DNS labels, ports in range and not shared (the main listener's may
+// be 0: the declared port), a known protocol, routes only on http listeners
+// and only in the three shapes, and no route given twice. Every problem is
+// reported. The host also refuses a listener whose port is the declared one.
 func ValidateNetwork(n Network) error {
 	var errs []error
 	names := map[string]bool{}
@@ -172,7 +181,9 @@ func ValidateNetwork(n Network) error {
 			errs = append(errs, fmt.Errorf("two listeners are named %q", l.Name))
 		}
 		names[l.Name] = true
-		if l.Port < 1 || l.Port > 65535 {
+		if l.Name == MainListener && l.Port == 0 {
+			// The declared port, which the host puts here.
+		} else if l.Port < 1 || l.Port > 65535 {
 			errs = append(errs, fmt.Errorf("listener %q: port %d is not a port (1 to 65535)", l.Name, l.Port))
 		} else if other, ok := ports[l.Port]; ok {
 			errs = append(errs, fmt.Errorf("listeners %q and %q both use port %d", other, l.Name, l.Port))
@@ -205,12 +216,14 @@ func ValidateNetwork(n Network) error {
 	return errors.Join(errs...)
 }
 
-// Grant is what the host set up for an instance, carried on Instance. It is the
-// zero value when the host gave no names (names are off, or the machine is not
-// set up for them) or predates Networked; then every listener is reached at an
-// address, and a module builds its URLs from Endpoint as before.
+// Grant is what the host set up for an instance, carried on Instance. A host
+// that knows Networked fills it for every instance, with names or without; it
+// is the zero value only from a host that predates Networked, and then a module
+// builds its URLs from Endpoint as before.
 type Grant struct {
-	// Host is the instance's name, aws.shop.doze, or "" without names.
+	// Host is the instance's name, aws.shop.doze, or "" when the host gave no
+	// names (names are off, or the machine is not set up for them). Without a
+	// name, listeners are reached at addresses and routes are not served.
 	Host string
 	// Listeners are what each listener got, by listener name.
 	Listeners map[string]GrantedListener
@@ -226,12 +239,24 @@ type GrantedListener struct {
 	// Empty for tcp.
 	URL string
 	// Hosts are the names its routes reach, each covering the names under it:
-	// aws.shop.doze, sync-aws.shop.doze.
+	// aws.shop.doze, sync-aws.shop.doze. Empty without names.
 	Hosts []string
+	// Backend is where the module listens for this listener: a unix socket
+	// path. The host forwards the listener's connections to it.
+	Backend string
 }
 
 // Named says whether the host gave the instance a name.
 func (g Grant) Named() bool { return g.Host != "" }
+
+// Backend is the socket a listener's backend listens on.
+func (g Grant) Backend(listener string) (string, bool) {
+	l, ok := g.Listeners[listener]
+	if !ok || l.Backend == "" {
+		return "", false
+	}
+	return l.Backend, true
+}
 
 // Addr is the address a listener got.
 func (g Grant) Addr(listener string) (string, bool) {
