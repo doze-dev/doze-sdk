@@ -41,6 +41,7 @@ service Engine {
   rpc RunAction(RunActionRequest) returns (RunActionResponse);  // CAP_ADMIN
   rpc DescribeConsole(Empty) returns (ConsoleSpec);               // CAP_CONSOLE
   rpc Tail(TailRequest) returns (stream ConsoleRow);               // CAP_CONSOLE
+  rpc Network(NetworkRequest) returns (NetworkResponse);           // CAP_NETWORKED
 }
 
 message Empty {}
@@ -67,6 +68,7 @@ message Instance {
   bytes spec = 8; // the plugin's own serialized config (opaque to core)
   map<string, Dep> deps = 9;
   Toolchain toolchain = 10;
+  Grant grant = 11; // the names the host set up (CAP_NETWORKED); absent from an older host
 }
 
 message Ready {
@@ -237,6 +239,29 @@ message ConsoleSpec {
 }
 message ConsoleRow { map<string, string> cells = 1; string tone = 2; }
 message TailRequest { Instance instance = 1; Endpoint endpoint = 2; string panel = 3; string selector = 4; }
+
+// ── CAP_NETWORKED: the ports a module serves, and the names it wants ─────────
+// Additive, like CAP_CONSOLE: a module that does not advertise the capability
+// has one tcp listener, "main", on its port (engine.DefaultNetwork), and an
+// older host never sends a grant, so the protocol version does not change.
+message Listener {
+  string name = 1;
+  int32 port = 2;
+  string protocol = 3;        // tcp | http
+  repeated string routes = 4; // "@", "<label>", "<prefix>@"; http only
+}
+message NetworkRequest { Instance instance = 1; }
+message NetworkResponse { repeated Listener listeners = 1; }
+message GrantedListener {
+  string addr = 1;
+  string url = 2;
+  repeated string hosts = 3;
+  string backend = 4; // the unix socket the module listens on for this listener
+}
+message Grant {
+  string host = 1;
+  map<string, GrantedListener> listeners = 2;
+}
 
 // Fetcher is served by the host, for the duration of one Resolve, on the
 // go-plugin broker id the ResolveRequest names. It is engine.Fetcher.

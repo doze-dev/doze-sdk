@@ -46,6 +46,7 @@ const (
 	Engine_RunAction_FullMethodName       = "/dozeplugin.v1.Engine/RunAction"
 	Engine_DescribeConsole_FullMethodName = "/dozeplugin.v1.Engine/DescribeConsole"
 	Engine_Tail_FullMethodName            = "/dozeplugin.v1.Engine/Tail"
+	Engine_Network_FullMethodName         = "/dozeplugin.v1.Engine/Network"
 )
 
 // EngineClient is the client API for Engine service.
@@ -88,6 +89,7 @@ type EngineClient interface {
 	RunAction(ctx context.Context, in *RunActionRequest, opts ...grpc.CallOption) (*RunActionResponse, error)
 	DescribeConsole(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ConsoleSpec, error)
 	Tail(ctx context.Context, in *TailRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ConsoleRow], error)
+	Network(ctx context.Context, in *NetworkRequest, opts ...grpc.CallOption) (*NetworkResponse, error)
 }
 
 type engineClient struct {
@@ -377,6 +379,16 @@ func (c *engineClient) Tail(ctx context.Context, in *TailRequest, opts ...grpc.C
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Engine_TailClient = grpc.ServerStreamingClient[ConsoleRow]
 
+func (c *engineClient) Network(ctx context.Context, in *NetworkRequest, opts ...grpc.CallOption) (*NetworkResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NetworkResponse)
+	err := c.cc.Invoke(ctx, Engine_Network_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EngineServer is the server API for Engine service.
 // All implementations must embed UnimplementedEngineServer
 // for forward compatibility.
@@ -417,6 +429,7 @@ type EngineServer interface {
 	RunAction(context.Context, *RunActionRequest) (*RunActionResponse, error)
 	DescribeConsole(context.Context, *Empty) (*ConsoleSpec, error)
 	Tail(*TailRequest, grpc.ServerStreamingServer[ConsoleRow]) error
+	Network(context.Context, *NetworkRequest) (*NetworkResponse, error)
 	mustEmbedUnimplementedEngineServer()
 }
 
@@ -507,6 +520,9 @@ func (UnimplementedEngineServer) DescribeConsole(context.Context, *Empty) (*Cons
 }
 func (UnimplementedEngineServer) Tail(*TailRequest, grpc.ServerStreamingServer[ConsoleRow]) error {
 	return status.Error(codes.Unimplemented, "method Tail not implemented")
+}
+func (UnimplementedEngineServer) Network(context.Context, *NetworkRequest) (*NetworkResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Network not implemented")
 }
 func (UnimplementedEngineServer) mustEmbedUnimplementedEngineServer() {}
 func (UnimplementedEngineServer) testEmbeddedByValue()                {}
@@ -1008,6 +1024,24 @@ func _Engine_Tail_Handler(srv interface{}, stream grpc.ServerStream) error {
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type Engine_TailServer = grpc.ServerStreamingServer[ConsoleRow]
 
+func _Engine_Network_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NetworkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EngineServer).Network(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Engine_Network_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EngineServer).Network(ctx, req.(*NetworkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Engine_ServiceDesc is the grpc.ServiceDesc for Engine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1118,6 +1152,10 @@ var Engine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DescribeConsole",
 			Handler:    _Engine_DescribeConsole_Handler,
+		},
+		{
+			MethodName: "Network",
+			Handler:    _Engine_Network_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

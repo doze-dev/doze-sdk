@@ -457,6 +457,7 @@ type Instance struct {
 	Spec          []byte                 `protobuf:"bytes,8,opt,name=spec,proto3" json:"spec,omitempty"` // the plugin's own serialized config (opaque to core)
 	Deps          map[string]*Dep        `protobuf:"bytes,9,rep,name=deps,proto3" json:"deps,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Toolchain     *Toolchain             `protobuf:"bytes,10,opt,name=toolchain,proto3" json:"toolchain,omitempty"`
+	Grant         *Grant                 `protobuf:"bytes,11,opt,name=grant,proto3" json:"grant,omitempty"` // the names the host set up (CAP_NETWORKED); absent from an older host
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -557,6 +558,13 @@ func (x *Instance) GetDeps() map[string]*Dep {
 func (x *Instance) GetToolchain() *Toolchain {
 	if x != nil {
 		return x.Toolchain
+	}
+	return nil
+}
+
+func (x *Instance) GetGrant() *Grant {
+	if x != nil {
+		return x.Grant
 	}
 	return nil
 }
@@ -3765,6 +3773,286 @@ func (x *TailRequest) GetSelector() string {
 	return ""
 }
 
+// ── CAP_NETWORKED: the ports a module serves, and the names it wants ─────────
+// Additive, like CAP_CONSOLE: a module that does not advertise the capability
+// has one tcp listener, "main", on its port (engine.DefaultNetwork), and an
+// older host never sends a grant, so the protocol version does not change.
+type Listener struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Protocol      string                 `protobuf:"bytes,3,opt,name=protocol,proto3" json:"protocol,omitempty"` // tcp | http
+	Routes        []string               `protobuf:"bytes,4,rep,name=routes,proto3" json:"routes,omitempty"`     // "@", "<label>", "<prefix>@"; http only
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Listener) Reset() {
+	*x = Listener{}
+	mi := &file_engine_proto_msgTypes[64]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Listener) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Listener) ProtoMessage() {}
+
+func (x *Listener) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_proto_msgTypes[64]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Listener.ProtoReflect.Descriptor instead.
+func (*Listener) Descriptor() ([]byte, []int) {
+	return file_engine_proto_rawDescGZIP(), []int{64}
+}
+
+func (x *Listener) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Listener) GetPort() int32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *Listener) GetProtocol() string {
+	if x != nil {
+		return x.Protocol
+	}
+	return ""
+}
+
+func (x *Listener) GetRoutes() []string {
+	if x != nil {
+		return x.Routes
+	}
+	return nil
+}
+
+type NetworkRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Instance      *Instance              `protobuf:"bytes,1,opt,name=instance,proto3" json:"instance,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NetworkRequest) Reset() {
+	*x = NetworkRequest{}
+	mi := &file_engine_proto_msgTypes[65]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NetworkRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NetworkRequest) ProtoMessage() {}
+
+func (x *NetworkRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_proto_msgTypes[65]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NetworkRequest.ProtoReflect.Descriptor instead.
+func (*NetworkRequest) Descriptor() ([]byte, []int) {
+	return file_engine_proto_rawDescGZIP(), []int{65}
+}
+
+func (x *NetworkRequest) GetInstance() *Instance {
+	if x != nil {
+		return x.Instance
+	}
+	return nil
+}
+
+type NetworkResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Listeners     []*Listener            `protobuf:"bytes,1,rep,name=listeners,proto3" json:"listeners,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NetworkResponse) Reset() {
+	*x = NetworkResponse{}
+	mi := &file_engine_proto_msgTypes[66]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NetworkResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NetworkResponse) ProtoMessage() {}
+
+func (x *NetworkResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_proto_msgTypes[66]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NetworkResponse.ProtoReflect.Descriptor instead.
+func (*NetworkResponse) Descriptor() ([]byte, []int) {
+	return file_engine_proto_rawDescGZIP(), []int{66}
+}
+
+func (x *NetworkResponse) GetListeners() []*Listener {
+	if x != nil {
+		return x.Listeners
+	}
+	return nil
+}
+
+type GrantedListener struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	Hosts         []string               `protobuf:"bytes,3,rep,name=hosts,proto3" json:"hosts,omitempty"`
+	Backend       string                 `protobuf:"bytes,4,opt,name=backend,proto3" json:"backend,omitempty"` // the unix socket the module listens on for this listener
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GrantedListener) Reset() {
+	*x = GrantedListener{}
+	mi := &file_engine_proto_msgTypes[67]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrantedListener) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrantedListener) ProtoMessage() {}
+
+func (x *GrantedListener) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_proto_msgTypes[67]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrantedListener.ProtoReflect.Descriptor instead.
+func (*GrantedListener) Descriptor() ([]byte, []int) {
+	return file_engine_proto_rawDescGZIP(), []int{67}
+}
+
+func (x *GrantedListener) GetAddr() string {
+	if x != nil {
+		return x.Addr
+	}
+	return ""
+}
+
+func (x *GrantedListener) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *GrantedListener) GetHosts() []string {
+	if x != nil {
+		return x.Hosts
+	}
+	return nil
+}
+
+func (x *GrantedListener) GetBackend() string {
+	if x != nil {
+		return x.Backend
+	}
+	return ""
+}
+
+type Grant struct {
+	state         protoimpl.MessageState      `protogen:"open.v1"`
+	Host          string                      `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Listeners     map[string]*GrantedListener `protobuf:"bytes,2,rep,name=listeners,proto3" json:"listeners,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Grant) Reset() {
+	*x = Grant{}
+	mi := &file_engine_proto_msgTypes[68]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Grant) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Grant) ProtoMessage() {}
+
+func (x *Grant) ProtoReflect() protoreflect.Message {
+	mi := &file_engine_proto_msgTypes[68]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Grant.ProtoReflect.Descriptor instead.
+func (*Grant) Descriptor() ([]byte, []int) {
+	return file_engine_proto_rawDescGZIP(), []int{68}
+}
+
+func (x *Grant) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *Grant) GetListeners() map[string]*GrantedListener {
+	if x != nil {
+		return x.Listeners
+	}
+	return nil
+}
+
 type ResolveMajorRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Engine        string                 `protobuf:"bytes,1,opt,name=engine,proto3" json:"engine,omitempty"`
@@ -3775,7 +4063,7 @@ type ResolveMajorRequest struct {
 
 func (x *ResolveMajorRequest) Reset() {
 	*x = ResolveMajorRequest{}
-	mi := &file_engine_proto_msgTypes[64]
+	mi := &file_engine_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3787,7 +4075,7 @@ func (x *ResolveMajorRequest) String() string {
 func (*ResolveMajorRequest) ProtoMessage() {}
 
 func (x *ResolveMajorRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[64]
+	mi := &file_engine_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3800,7 +4088,7 @@ func (x *ResolveMajorRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveMajorRequest.ProtoReflect.Descriptor instead.
 func (*ResolveMajorRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{64}
+	return file_engine_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *ResolveMajorRequest) GetEngine() string {
@@ -3826,7 +4114,7 @@ type ResolveMajorResponse struct {
 
 func (x *ResolveMajorResponse) Reset() {
 	*x = ResolveMajorResponse{}
-	mi := &file_engine_proto_msgTypes[65]
+	mi := &file_engine_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3838,7 +4126,7 @@ func (x *ResolveMajorResponse) String() string {
 func (*ResolveMajorResponse) ProtoMessage() {}
 
 func (x *ResolveMajorResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[65]
+	mi := &file_engine_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3851,7 +4139,7 @@ func (x *ResolveMajorResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveMajorResponse.ProtoReflect.Descriptor instead.
 func (*ResolveMajorResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{65}
+	return file_engine_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *ResolveMajorResponse) GetFull() string {
@@ -3873,7 +4161,7 @@ type EnsureRequest struct {
 
 func (x *EnsureRequest) Reset() {
 	*x = EnsureRequest{}
-	mi := &file_engine_proto_msgTypes[66]
+	mi := &file_engine_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3885,7 +4173,7 @@ func (x *EnsureRequest) String() string {
 func (*EnsureRequest) ProtoMessage() {}
 
 func (x *EnsureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[66]
+	mi := &file_engine_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3898,7 +4186,7 @@ func (x *EnsureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnsureRequest.ProtoReflect.Descriptor instead.
 func (*EnsureRequest) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{66}
+	return file_engine_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *EnsureRequest) GetEngine() string {
@@ -3939,7 +4227,7 @@ type EnsureResponse struct {
 
 func (x *EnsureResponse) Reset() {
 	*x = EnsureResponse{}
-	mi := &file_engine_proto_msgTypes[67]
+	mi := &file_engine_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3951,7 +4239,7 @@ func (x *EnsureResponse) String() string {
 func (*EnsureResponse) ProtoMessage() {}
 
 func (x *EnsureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_engine_proto_msgTypes[67]
+	mi := &file_engine_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3964,7 +4252,7 @@ func (x *EnsureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnsureResponse.ProtoReflect.Descriptor instead.
 func (*EnsureResponse) Descriptor() ([]byte, []int) {
-	return file_engine_proto_rawDescGZIP(), []int{67}
+	return file_engine_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *EnsureResponse) GetBinDir() string {
@@ -4022,7 +4310,7 @@ const file_engine_proto_rawDesc = "" +
 	"\n" +
 	"socket_dir\x18\x03 \x01(\tR\tsocketDir\x12\x18\n" +
 	"\abackend\x18\x04 \x01(\tR\abackend\x12\x10\n" +
-	"\x03url\x18\x05 \x01(\tR\x03url\"\x9f\x03\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\"\xcb\x03\n" +
 	"\bInstance\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x18\n" +
@@ -4035,7 +4323,8 @@ const file_engine_proto_rawDesc = "" +
 	"\x04spec\x18\b \x01(\fR\x04spec\x125\n" +
 	"\x04deps\x18\t \x03(\v2!.dozeplugin.v1.Instance.DepsEntryR\x04deps\x126\n" +
 	"\ttoolchain\x18\n" +
-	" \x01(\v2\x18.dozeplugin.v1.ToolchainR\ttoolchain\x1aK\n" +
+	" \x01(\v2\x18.dozeplugin.v1.ToolchainR\ttoolchain\x12*\n" +
+	"\x05grant\x18\v \x01(\v2\x14.dozeplugin.v1.GrantR\x05grant\x1aK\n" +
 	"\tDepsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12(\n" +
 	"\x05value\x18\x02 \x01(\v2\x12.dozeplugin.v1.DepR\x05value:\x028\x01\"\x8d\x01\n" +
@@ -4266,7 +4555,27 @@ const file_engine_proto_rawDesc = "" +
 	"\binstance\x18\x01 \x01(\v2\x17.dozeplugin.v1.InstanceR\binstance\x123\n" +
 	"\bendpoint\x18\x02 \x01(\v2\x17.dozeplugin.v1.EndpointR\bendpoint\x12\x14\n" +
 	"\x05panel\x18\x03 \x01(\tR\x05panel\x12\x1a\n" +
-	"\bselector\x18\x04 \x01(\tR\bselector\"C\n" +
+	"\bselector\x18\x04 \x01(\tR\bselector\"f\n" +
+	"\bListener\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x1a\n" +
+	"\bprotocol\x18\x03 \x01(\tR\bprotocol\x12\x16\n" +
+	"\x06routes\x18\x04 \x03(\tR\x06routes\"E\n" +
+	"\x0eNetworkRequest\x123\n" +
+	"\binstance\x18\x01 \x01(\v2\x17.dozeplugin.v1.InstanceR\binstance\"H\n" +
+	"\x0fNetworkResponse\x125\n" +
+	"\tlisteners\x18\x01 \x03(\v2\x17.dozeplugin.v1.ListenerR\tlisteners\"g\n" +
+	"\x0fGrantedListener\x12\x12\n" +
+	"\x04addr\x18\x01 \x01(\tR\x04addr\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12\x14\n" +
+	"\x05hosts\x18\x03 \x03(\tR\x05hosts\x12\x18\n" +
+	"\abackend\x18\x04 \x01(\tR\abackend\"\xbc\x01\n" +
+	"\x05Grant\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12A\n" +
+	"\tlisteners\x18\x02 \x03(\v2#.dozeplugin.v1.Grant.ListenersEntryR\tlisteners\x1a\\\n" +
+	"\x0eListenersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x124\n" +
+	"\x05value\x18\x02 \x01(\v2\x1e.dozeplugin.v1.GrantedListenerR\x05value:\x028\x01\"C\n" +
 	"\x13ResolveMajorRequest\x12\x16\n" +
 	"\x06engine\x18\x01 \x01(\tR\x06engine\x12\x14\n" +
 	"\x05major\x18\x02 \x01(\tR\x05major\"*\n" +
@@ -4279,7 +4588,7 @@ const file_engine_proto_rawDesc = "" +
 	"\fexpected_sha\x18\x04 \x01(\tR\vexpectedSha\"A\n" +
 	"\x0eEnsureResponse\x12\x17\n" +
 	"\abin_dir\x18\x01 \x01(\tR\x06binDir\x12\x16\n" +
-	"\x06digest\x18\x02 \x01(\tR\x06digest2\xcb\x0f\n" +
+	"\x06digest\x18\x02 \x01(\tR\x06digest2\x95\x10\n" +
 	"\x06Engine\x129\n" +
 	"\x04Type\x12\x14.dozeplugin.v1.Empty\x1a\x1b.dozeplugin.v1.TypeResponse\x12I\n" +
 	"\fCapabilities\x12\x14.dozeplugin.v1.Empty\x1a#.dozeplugin.v1.CapabilitiesResponse\x12K\n" +
@@ -4311,7 +4620,8 @@ const file_engine_proto_rawDesc = "" +
 	"\tResources\x12\x1f.dozeplugin.v1.ResourcesRequest\x1a .dozeplugin.v1.ResourcesResponse\x12N\n" +
 	"\tRunAction\x12\x1f.dozeplugin.v1.RunActionRequest\x1a .dozeplugin.v1.RunActionResponse\x12C\n" +
 	"\x0fDescribeConsole\x12\x14.dozeplugin.v1.Empty\x1a\x1a.dozeplugin.v1.ConsoleSpec\x12?\n" +
-	"\x04Tail\x12\x1a.dozeplugin.v1.TailRequest\x1a\x19.dozeplugin.v1.ConsoleRow0\x012\xa9\x01\n" +
+	"\x04Tail\x12\x1a.dozeplugin.v1.TailRequest\x1a\x19.dozeplugin.v1.ConsoleRow0\x01\x12H\n" +
+	"\aNetwork\x12\x1d.dozeplugin.v1.NetworkRequest\x1a\x1e.dozeplugin.v1.NetworkResponse2\xa9\x01\n" +
 	"\aFetcher\x12W\n" +
 	"\fResolveMajor\x12\".dozeplugin.v1.ResolveMajorRequest\x1a#.dozeplugin.v1.ResolveMajorResponse\x12E\n" +
 	"\x06Ensure\x12\x1c.dozeplugin.v1.EnsureRequest\x1a\x1d.dozeplugin.v1.EnsureResponseB1Z/github.com/doze-dev/doze-sdk/plugin/proto;protob\x06proto3"
@@ -4328,7 +4638,7 @@ func file_engine_proto_rawDescGZIP() []byte {
 	return file_engine_proto_rawDescData
 }
 
-var file_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 75)
+var file_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 81)
 var file_engine_proto_goTypes = []any{
 	(*Empty)(nil),                 // 0: dozeplugin.v1.Empty
 	(*Platform)(nil),              // 1: dozeplugin.v1.Platform
@@ -4394,144 +4704,157 @@ var file_engine_proto_goTypes = []any{
 	(*ConsoleSpec)(nil),           // 61: dozeplugin.v1.ConsoleSpec
 	(*ConsoleRow)(nil),            // 62: dozeplugin.v1.ConsoleRow
 	(*TailRequest)(nil),           // 63: dozeplugin.v1.TailRequest
-	(*ResolveMajorRequest)(nil),   // 64: dozeplugin.v1.ResolveMajorRequest
-	(*ResolveMajorResponse)(nil),  // 65: dozeplugin.v1.ResolveMajorResponse
-	(*EnsureRequest)(nil),         // 66: dozeplugin.v1.EnsureRequest
-	(*EnsureResponse)(nil),        // 67: dozeplugin.v1.EnsureResponse
-	nil,                           // 68: dozeplugin.v1.Toolchain.ToolsEntry
-	nil,                           // 69: dozeplugin.v1.Pin.HashesEntry
-	nil,                           // 70: dozeplugin.v1.Instance.DepsEntry
-	nil,                           // 71: dozeplugin.v1.DecodeRequest.VariablesEntry
-	nil,                           // 72: dozeplugin.v1.AttributesResponse.AttrsEntry
-	nil,                           // 73: dozeplugin.v1.Resource.InfoEntry
-	nil,                           // 74: dozeplugin.v1.ConsoleRow.CellsEntry
+	(*Listener)(nil),              // 64: dozeplugin.v1.Listener
+	(*NetworkRequest)(nil),        // 65: dozeplugin.v1.NetworkRequest
+	(*NetworkResponse)(nil),       // 66: dozeplugin.v1.NetworkResponse
+	(*GrantedListener)(nil),       // 67: dozeplugin.v1.GrantedListener
+	(*Grant)(nil),                 // 68: dozeplugin.v1.Grant
+	(*ResolveMajorRequest)(nil),   // 69: dozeplugin.v1.ResolveMajorRequest
+	(*ResolveMajorResponse)(nil),  // 70: dozeplugin.v1.ResolveMajorResponse
+	(*EnsureRequest)(nil),         // 71: dozeplugin.v1.EnsureRequest
+	(*EnsureResponse)(nil),        // 72: dozeplugin.v1.EnsureResponse
+	nil,                           // 73: dozeplugin.v1.Toolchain.ToolsEntry
+	nil,                           // 74: dozeplugin.v1.Pin.HashesEntry
+	nil,                           // 75: dozeplugin.v1.Instance.DepsEntry
+	nil,                           // 76: dozeplugin.v1.DecodeRequest.VariablesEntry
+	nil,                           // 77: dozeplugin.v1.AttributesResponse.AttrsEntry
+	nil,                           // 78: dozeplugin.v1.Resource.InfoEntry
+	nil,                           // 79: dozeplugin.v1.ConsoleRow.CellsEntry
+	nil,                           // 80: dozeplugin.v1.Grant.ListenersEntry
 }
 var file_engine_proto_depIdxs = []int32{
-	68, // 0: dozeplugin.v1.Toolchain.tools:type_name -> dozeplugin.v1.Toolchain.ToolsEntry
-	69, // 1: dozeplugin.v1.Pin.hashes:type_name -> dozeplugin.v1.Pin.HashesEntry
+	73, // 0: dozeplugin.v1.Toolchain.tools:type_name -> dozeplugin.v1.Toolchain.ToolsEntry
+	74, // 1: dozeplugin.v1.Pin.hashes:type_name -> dozeplugin.v1.Pin.HashesEntry
 	3,  // 2: dozeplugin.v1.LockEntry.pin:type_name -> dozeplugin.v1.Pin
 	5,  // 3: dozeplugin.v1.Instance.endpoint:type_name -> dozeplugin.v1.Endpoint
-	70, // 4: dozeplugin.v1.Instance.deps:type_name -> dozeplugin.v1.Instance.DepsEntry
+	75, // 4: dozeplugin.v1.Instance.deps:type_name -> dozeplugin.v1.Instance.DepsEntry
 	2,  // 5: dozeplugin.v1.Instance.toolchain:type_name -> dozeplugin.v1.Toolchain
-	8,  // 6: dozeplugin.v1.SpawnSpec.ready:type_name -> dozeplugin.v1.Ready
-	9,  // 7: dozeplugin.v1.SpawnPlan.specs:type_name -> dozeplugin.v1.SpawnSpec
-	71, // 8: dozeplugin.v1.DecodeRequest.variables:type_name -> dozeplugin.v1.DecodeRequest.VariablesEntry
-	18, // 9: dozeplugin.v1.DecodeDiagnostics.diagnostics:type_name -> dozeplugin.v1.Diagnostic
-	19, // 10: dozeplugin.v1.Diagnostic.subject:type_name -> dozeplugin.v1.SourceRange
-	19, // 11: dozeplugin.v1.Diagnostic.context:type_name -> dozeplugin.v1.SourceRange
-	20, // 12: dozeplugin.v1.SourceRange.start:type_name -> dozeplugin.v1.SourcePos
-	20, // 13: dozeplugin.v1.SourceRange.end:type_name -> dozeplugin.v1.SourcePos
-	1,  // 14: dozeplugin.v1.ResolveRequest.platform:type_name -> dozeplugin.v1.Platform
-	4,  // 15: dozeplugin.v1.ResolveRequest.locked:type_name -> dozeplugin.v1.LockEntry
-	2,  // 16: dozeplugin.v1.ResolveResponse.toolchain:type_name -> dozeplugin.v1.Toolchain
-	4,  // 17: dozeplugin.v1.ResolveResponse.recorded:type_name -> dozeplugin.v1.LockEntry
-	7,  // 18: dozeplugin.v1.ProvisionRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 19: dozeplugin.v1.ProvisionRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	7,  // 20: dozeplugin.v1.ConnStringRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 21: dozeplugin.v1.ConnStringRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	7,  // 22: dozeplugin.v1.PlanRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 23: dozeplugin.v1.PlanRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	2,  // 24: dozeplugin.v1.EnsureTemplateRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	7,  // 25: dozeplugin.v1.ConvergeRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 26: dozeplugin.v1.ConvergeRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	5,  // 27: dozeplugin.v1.ConvergeRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	7,  // 28: dozeplugin.v1.ObjectsRequest.instance:type_name -> dozeplugin.v1.Instance
-	12, // 29: dozeplugin.v1.ObjectsResponse.objects:type_name -> dozeplugin.v1.Object
-	7,  // 30: dozeplugin.v1.PruneRequest.instance:type_name -> dozeplugin.v1.Instance
-	2,  // 31: dozeplugin.v1.PruneRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
-	5,  // 32: dozeplugin.v1.PruneRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	12, // 33: dozeplugin.v1.PruneRequest.removed:type_name -> dozeplugin.v1.Object
-	7,  // 34: dozeplugin.v1.AttributesRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 35: dozeplugin.v1.AttributesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	72, // 36: dozeplugin.v1.AttributesResponse.attrs:type_name -> dozeplugin.v1.AttributesResponse.AttrsEntry
-	7,  // 37: dozeplugin.v1.BackendURLRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 38: dozeplugin.v1.SupervisedRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 39: dozeplugin.v1.HookRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 40: dozeplugin.v1.HealthRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 41: dozeplugin.v1.RestartPolicyRequest.instance:type_name -> dozeplugin.v1.Instance
-	7,  // 42: dozeplugin.v1.AddrRequest.instance:type_name -> dozeplugin.v1.Instance
-	73, // 43: dozeplugin.v1.Resource.info:type_name -> dozeplugin.v1.Resource.InfoEntry
-	50, // 44: dozeplugin.v1.ActionsResponse.actions:type_name -> dozeplugin.v1.Action
-	7,  // 45: dozeplugin.v1.ResourcesRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 46: dozeplugin.v1.ResourcesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	49, // 47: dozeplugin.v1.ResourcesResponse.resources:type_name -> dozeplugin.v1.Resource
-	7,  // 48: dozeplugin.v1.RunActionRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 49: dozeplugin.v1.RunActionRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	56, // 50: dozeplugin.v1.ConsolePanel.columns:type_name -> dozeplugin.v1.ConsoleColumn
-	58, // 51: dozeplugin.v1.ConsoleNode.children:type_name -> dozeplugin.v1.ConsoleNode
-	58, // 52: dozeplugin.v1.ConsoleTab.body:type_name -> dozeplugin.v1.ConsoleNode
-	58, // 53: dozeplugin.v1.ConsoleExtension.node:type_name -> dozeplugin.v1.ConsoleNode
-	57, // 54: dozeplugin.v1.ConsoleSpec.panels:type_name -> dozeplugin.v1.ConsolePanel
-	59, // 55: dozeplugin.v1.ConsoleSpec.tabs:type_name -> dozeplugin.v1.ConsoleTab
-	60, // 56: dozeplugin.v1.ConsoleSpec.extend:type_name -> dozeplugin.v1.ConsoleExtension
-	74, // 57: dozeplugin.v1.ConsoleRow.cells:type_name -> dozeplugin.v1.ConsoleRow.CellsEntry
-	7,  // 58: dozeplugin.v1.TailRequest.instance:type_name -> dozeplugin.v1.Instance
-	5,  // 59: dozeplugin.v1.TailRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
-	1,  // 60: dozeplugin.v1.EnsureRequest.platform:type_name -> dozeplugin.v1.Platform
-	6,  // 61: dozeplugin.v1.Instance.DepsEntry.value:type_name -> dozeplugin.v1.Dep
-	0,  // 62: dozeplugin.v1.Engine.Type:input_type -> dozeplugin.v1.Empty
-	0,  // 63: dozeplugin.v1.Engine.Capabilities:input_type -> dozeplugin.v1.Empty
-	15, // 64: dozeplugin.v1.Engine.DecodeConfig:input_type -> dozeplugin.v1.DecodeRequest
-	21, // 65: dozeplugin.v1.Engine.Resolve:input_type -> dozeplugin.v1.ResolveRequest
-	23, // 66: dozeplugin.v1.Engine.Provision:input_type -> dozeplugin.v1.ProvisionRequest
-	24, // 67: dozeplugin.v1.Engine.Provisioned:input_type -> dozeplugin.v1.ProvisionedRequest
-	26, // 68: dozeplugin.v1.Engine.BackendSocket:input_type -> dozeplugin.v1.BackendSocketRequest
-	28, // 69: dozeplugin.v1.Engine.ConnString:input_type -> dozeplugin.v1.ConnStringRequest
-	30, // 70: dozeplugin.v1.Engine.Plan:input_type -> dozeplugin.v1.PlanRequest
-	34, // 71: dozeplugin.v1.Engine.Converge:input_type -> dozeplugin.v1.ConvergeRequest
-	35, // 72: dozeplugin.v1.Engine.Objects:input_type -> dozeplugin.v1.ObjectsRequest
-	37, // 73: dozeplugin.v1.Engine.Prune:input_type -> dozeplugin.v1.PruneRequest
-	38, // 74: dozeplugin.v1.Engine.Attributes:input_type -> dozeplugin.v1.AttributesRequest
-	40, // 75: dozeplugin.v1.Engine.BackendURL:input_type -> dozeplugin.v1.BackendURLRequest
-	42, // 76: dozeplugin.v1.Engine.Supervised:input_type -> dozeplugin.v1.SupervisedRequest
-	44, // 77: dozeplugin.v1.Engine.Hook:input_type -> dozeplugin.v1.HookRequest
-	45, // 78: dozeplugin.v1.Engine.CheckHealth:input_type -> dozeplugin.v1.HealthRequest
-	46, // 79: dozeplugin.v1.Engine.RestartPolicy:input_type -> dozeplugin.v1.RestartPolicyRequest
-	47, // 80: dozeplugin.v1.Engine.AdvertisedAddr:input_type -> dozeplugin.v1.AddrRequest
-	31, // 81: dozeplugin.v1.Engine.EnsureTemplate:input_type -> dozeplugin.v1.EnsureTemplateRequest
-	32, // 82: dozeplugin.v1.Engine.CloneTemplate:input_type -> dozeplugin.v1.CloneTemplateRequest
-	0,  // 83: dozeplugin.v1.Engine.WireAddr:input_type -> dozeplugin.v1.Empty
-	0,  // 84: dozeplugin.v1.Engine.Actions:input_type -> dozeplugin.v1.Empty
-	52, // 85: dozeplugin.v1.Engine.Resources:input_type -> dozeplugin.v1.ResourcesRequest
-	54, // 86: dozeplugin.v1.Engine.RunAction:input_type -> dozeplugin.v1.RunActionRequest
-	0,  // 87: dozeplugin.v1.Engine.DescribeConsole:input_type -> dozeplugin.v1.Empty
-	63, // 88: dozeplugin.v1.Engine.Tail:input_type -> dozeplugin.v1.TailRequest
-	64, // 89: dozeplugin.v1.Fetcher.ResolveMajor:input_type -> dozeplugin.v1.ResolveMajorRequest
-	66, // 90: dozeplugin.v1.Fetcher.Ensure:input_type -> dozeplugin.v1.EnsureRequest
-	13, // 91: dozeplugin.v1.Engine.Type:output_type -> dozeplugin.v1.TypeResponse
-	14, // 92: dozeplugin.v1.Engine.Capabilities:output_type -> dozeplugin.v1.CapabilitiesResponse
-	16, // 93: dozeplugin.v1.Engine.DecodeConfig:output_type -> dozeplugin.v1.DecodeResponse
-	22, // 94: dozeplugin.v1.Engine.Resolve:output_type -> dozeplugin.v1.ResolveResponse
-	0,  // 95: dozeplugin.v1.Engine.Provision:output_type -> dozeplugin.v1.Empty
-	25, // 96: dozeplugin.v1.Engine.Provisioned:output_type -> dozeplugin.v1.ProvisionedResponse
-	27, // 97: dozeplugin.v1.Engine.BackendSocket:output_type -> dozeplugin.v1.BackendSocketResponse
-	29, // 98: dozeplugin.v1.Engine.ConnString:output_type -> dozeplugin.v1.ConnStringResponse
-	10, // 99: dozeplugin.v1.Engine.Plan:output_type -> dozeplugin.v1.SpawnPlan
-	0,  // 100: dozeplugin.v1.Engine.Converge:output_type -> dozeplugin.v1.Empty
-	36, // 101: dozeplugin.v1.Engine.Objects:output_type -> dozeplugin.v1.ObjectsResponse
-	0,  // 102: dozeplugin.v1.Engine.Prune:output_type -> dozeplugin.v1.Empty
-	39, // 103: dozeplugin.v1.Engine.Attributes:output_type -> dozeplugin.v1.AttributesResponse
-	41, // 104: dozeplugin.v1.Engine.BackendURL:output_type -> dozeplugin.v1.BackendURLResponse
-	43, // 105: dozeplugin.v1.Engine.Supervised:output_type -> dozeplugin.v1.SupervisedResponse
-	0,  // 106: dozeplugin.v1.Engine.Hook:output_type -> dozeplugin.v1.Empty
-	0,  // 107: dozeplugin.v1.Engine.CheckHealth:output_type -> dozeplugin.v1.Empty
-	11, // 108: dozeplugin.v1.Engine.RestartPolicy:output_type -> dozeplugin.v1.RestartSpec
-	48, // 109: dozeplugin.v1.Engine.AdvertisedAddr:output_type -> dozeplugin.v1.AddrResponse
-	0,  // 110: dozeplugin.v1.Engine.EnsureTemplate:output_type -> dozeplugin.v1.Empty
-	0,  // 111: dozeplugin.v1.Engine.CloneTemplate:output_type -> dozeplugin.v1.Empty
-	33, // 112: dozeplugin.v1.Engine.WireAddr:output_type -> dozeplugin.v1.WireAddrResponse
-	51, // 113: dozeplugin.v1.Engine.Actions:output_type -> dozeplugin.v1.ActionsResponse
-	53, // 114: dozeplugin.v1.Engine.Resources:output_type -> dozeplugin.v1.ResourcesResponse
-	55, // 115: dozeplugin.v1.Engine.RunAction:output_type -> dozeplugin.v1.RunActionResponse
-	61, // 116: dozeplugin.v1.Engine.DescribeConsole:output_type -> dozeplugin.v1.ConsoleSpec
-	62, // 117: dozeplugin.v1.Engine.Tail:output_type -> dozeplugin.v1.ConsoleRow
-	65, // 118: dozeplugin.v1.Fetcher.ResolveMajor:output_type -> dozeplugin.v1.ResolveMajorResponse
-	67, // 119: dozeplugin.v1.Fetcher.Ensure:output_type -> dozeplugin.v1.EnsureResponse
-	91, // [91:120] is the sub-list for method output_type
-	62, // [62:91] is the sub-list for method input_type
-	62, // [62:62] is the sub-list for extension type_name
-	62, // [62:62] is the sub-list for extension extendee
-	0,  // [0:62] is the sub-list for field type_name
+	68, // 6: dozeplugin.v1.Instance.grant:type_name -> dozeplugin.v1.Grant
+	8,  // 7: dozeplugin.v1.SpawnSpec.ready:type_name -> dozeplugin.v1.Ready
+	9,  // 8: dozeplugin.v1.SpawnPlan.specs:type_name -> dozeplugin.v1.SpawnSpec
+	76, // 9: dozeplugin.v1.DecodeRequest.variables:type_name -> dozeplugin.v1.DecodeRequest.VariablesEntry
+	18, // 10: dozeplugin.v1.DecodeDiagnostics.diagnostics:type_name -> dozeplugin.v1.Diagnostic
+	19, // 11: dozeplugin.v1.Diagnostic.subject:type_name -> dozeplugin.v1.SourceRange
+	19, // 12: dozeplugin.v1.Diagnostic.context:type_name -> dozeplugin.v1.SourceRange
+	20, // 13: dozeplugin.v1.SourceRange.start:type_name -> dozeplugin.v1.SourcePos
+	20, // 14: dozeplugin.v1.SourceRange.end:type_name -> dozeplugin.v1.SourcePos
+	1,  // 15: dozeplugin.v1.ResolveRequest.platform:type_name -> dozeplugin.v1.Platform
+	4,  // 16: dozeplugin.v1.ResolveRequest.locked:type_name -> dozeplugin.v1.LockEntry
+	2,  // 17: dozeplugin.v1.ResolveResponse.toolchain:type_name -> dozeplugin.v1.Toolchain
+	4,  // 18: dozeplugin.v1.ResolveResponse.recorded:type_name -> dozeplugin.v1.LockEntry
+	7,  // 19: dozeplugin.v1.ProvisionRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 20: dozeplugin.v1.ProvisionRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	7,  // 21: dozeplugin.v1.ConnStringRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 22: dozeplugin.v1.ConnStringRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	7,  // 23: dozeplugin.v1.PlanRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 24: dozeplugin.v1.PlanRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	2,  // 25: dozeplugin.v1.EnsureTemplateRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	7,  // 26: dozeplugin.v1.ConvergeRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 27: dozeplugin.v1.ConvergeRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	5,  // 28: dozeplugin.v1.ConvergeRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	7,  // 29: dozeplugin.v1.ObjectsRequest.instance:type_name -> dozeplugin.v1.Instance
+	12, // 30: dozeplugin.v1.ObjectsResponse.objects:type_name -> dozeplugin.v1.Object
+	7,  // 31: dozeplugin.v1.PruneRequest.instance:type_name -> dozeplugin.v1.Instance
+	2,  // 32: dozeplugin.v1.PruneRequest.toolchain:type_name -> dozeplugin.v1.Toolchain
+	5,  // 33: dozeplugin.v1.PruneRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	12, // 34: dozeplugin.v1.PruneRequest.removed:type_name -> dozeplugin.v1.Object
+	7,  // 35: dozeplugin.v1.AttributesRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 36: dozeplugin.v1.AttributesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	77, // 37: dozeplugin.v1.AttributesResponse.attrs:type_name -> dozeplugin.v1.AttributesResponse.AttrsEntry
+	7,  // 38: dozeplugin.v1.BackendURLRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 39: dozeplugin.v1.SupervisedRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 40: dozeplugin.v1.HookRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 41: dozeplugin.v1.HealthRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 42: dozeplugin.v1.RestartPolicyRequest.instance:type_name -> dozeplugin.v1.Instance
+	7,  // 43: dozeplugin.v1.AddrRequest.instance:type_name -> dozeplugin.v1.Instance
+	78, // 44: dozeplugin.v1.Resource.info:type_name -> dozeplugin.v1.Resource.InfoEntry
+	50, // 45: dozeplugin.v1.ActionsResponse.actions:type_name -> dozeplugin.v1.Action
+	7,  // 46: dozeplugin.v1.ResourcesRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 47: dozeplugin.v1.ResourcesRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	49, // 48: dozeplugin.v1.ResourcesResponse.resources:type_name -> dozeplugin.v1.Resource
+	7,  // 49: dozeplugin.v1.RunActionRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 50: dozeplugin.v1.RunActionRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	56, // 51: dozeplugin.v1.ConsolePanel.columns:type_name -> dozeplugin.v1.ConsoleColumn
+	58, // 52: dozeplugin.v1.ConsoleNode.children:type_name -> dozeplugin.v1.ConsoleNode
+	58, // 53: dozeplugin.v1.ConsoleTab.body:type_name -> dozeplugin.v1.ConsoleNode
+	58, // 54: dozeplugin.v1.ConsoleExtension.node:type_name -> dozeplugin.v1.ConsoleNode
+	57, // 55: dozeplugin.v1.ConsoleSpec.panels:type_name -> dozeplugin.v1.ConsolePanel
+	59, // 56: dozeplugin.v1.ConsoleSpec.tabs:type_name -> dozeplugin.v1.ConsoleTab
+	60, // 57: dozeplugin.v1.ConsoleSpec.extend:type_name -> dozeplugin.v1.ConsoleExtension
+	79, // 58: dozeplugin.v1.ConsoleRow.cells:type_name -> dozeplugin.v1.ConsoleRow.CellsEntry
+	7,  // 59: dozeplugin.v1.TailRequest.instance:type_name -> dozeplugin.v1.Instance
+	5,  // 60: dozeplugin.v1.TailRequest.endpoint:type_name -> dozeplugin.v1.Endpoint
+	7,  // 61: dozeplugin.v1.NetworkRequest.instance:type_name -> dozeplugin.v1.Instance
+	64, // 62: dozeplugin.v1.NetworkResponse.listeners:type_name -> dozeplugin.v1.Listener
+	80, // 63: dozeplugin.v1.Grant.listeners:type_name -> dozeplugin.v1.Grant.ListenersEntry
+	1,  // 64: dozeplugin.v1.EnsureRequest.platform:type_name -> dozeplugin.v1.Platform
+	6,  // 65: dozeplugin.v1.Instance.DepsEntry.value:type_name -> dozeplugin.v1.Dep
+	67, // 66: dozeplugin.v1.Grant.ListenersEntry.value:type_name -> dozeplugin.v1.GrantedListener
+	0,  // 67: dozeplugin.v1.Engine.Type:input_type -> dozeplugin.v1.Empty
+	0,  // 68: dozeplugin.v1.Engine.Capabilities:input_type -> dozeplugin.v1.Empty
+	15, // 69: dozeplugin.v1.Engine.DecodeConfig:input_type -> dozeplugin.v1.DecodeRequest
+	21, // 70: dozeplugin.v1.Engine.Resolve:input_type -> dozeplugin.v1.ResolveRequest
+	23, // 71: dozeplugin.v1.Engine.Provision:input_type -> dozeplugin.v1.ProvisionRequest
+	24, // 72: dozeplugin.v1.Engine.Provisioned:input_type -> dozeplugin.v1.ProvisionedRequest
+	26, // 73: dozeplugin.v1.Engine.BackendSocket:input_type -> dozeplugin.v1.BackendSocketRequest
+	28, // 74: dozeplugin.v1.Engine.ConnString:input_type -> dozeplugin.v1.ConnStringRequest
+	30, // 75: dozeplugin.v1.Engine.Plan:input_type -> dozeplugin.v1.PlanRequest
+	34, // 76: dozeplugin.v1.Engine.Converge:input_type -> dozeplugin.v1.ConvergeRequest
+	35, // 77: dozeplugin.v1.Engine.Objects:input_type -> dozeplugin.v1.ObjectsRequest
+	37, // 78: dozeplugin.v1.Engine.Prune:input_type -> dozeplugin.v1.PruneRequest
+	38, // 79: dozeplugin.v1.Engine.Attributes:input_type -> dozeplugin.v1.AttributesRequest
+	40, // 80: dozeplugin.v1.Engine.BackendURL:input_type -> dozeplugin.v1.BackendURLRequest
+	42, // 81: dozeplugin.v1.Engine.Supervised:input_type -> dozeplugin.v1.SupervisedRequest
+	44, // 82: dozeplugin.v1.Engine.Hook:input_type -> dozeplugin.v1.HookRequest
+	45, // 83: dozeplugin.v1.Engine.CheckHealth:input_type -> dozeplugin.v1.HealthRequest
+	46, // 84: dozeplugin.v1.Engine.RestartPolicy:input_type -> dozeplugin.v1.RestartPolicyRequest
+	47, // 85: dozeplugin.v1.Engine.AdvertisedAddr:input_type -> dozeplugin.v1.AddrRequest
+	31, // 86: dozeplugin.v1.Engine.EnsureTemplate:input_type -> dozeplugin.v1.EnsureTemplateRequest
+	32, // 87: dozeplugin.v1.Engine.CloneTemplate:input_type -> dozeplugin.v1.CloneTemplateRequest
+	0,  // 88: dozeplugin.v1.Engine.WireAddr:input_type -> dozeplugin.v1.Empty
+	0,  // 89: dozeplugin.v1.Engine.Actions:input_type -> dozeplugin.v1.Empty
+	52, // 90: dozeplugin.v1.Engine.Resources:input_type -> dozeplugin.v1.ResourcesRequest
+	54, // 91: dozeplugin.v1.Engine.RunAction:input_type -> dozeplugin.v1.RunActionRequest
+	0,  // 92: dozeplugin.v1.Engine.DescribeConsole:input_type -> dozeplugin.v1.Empty
+	63, // 93: dozeplugin.v1.Engine.Tail:input_type -> dozeplugin.v1.TailRequest
+	65, // 94: dozeplugin.v1.Engine.Network:input_type -> dozeplugin.v1.NetworkRequest
+	69, // 95: dozeplugin.v1.Fetcher.ResolveMajor:input_type -> dozeplugin.v1.ResolveMajorRequest
+	71, // 96: dozeplugin.v1.Fetcher.Ensure:input_type -> dozeplugin.v1.EnsureRequest
+	13, // 97: dozeplugin.v1.Engine.Type:output_type -> dozeplugin.v1.TypeResponse
+	14, // 98: dozeplugin.v1.Engine.Capabilities:output_type -> dozeplugin.v1.CapabilitiesResponse
+	16, // 99: dozeplugin.v1.Engine.DecodeConfig:output_type -> dozeplugin.v1.DecodeResponse
+	22, // 100: dozeplugin.v1.Engine.Resolve:output_type -> dozeplugin.v1.ResolveResponse
+	0,  // 101: dozeplugin.v1.Engine.Provision:output_type -> dozeplugin.v1.Empty
+	25, // 102: dozeplugin.v1.Engine.Provisioned:output_type -> dozeplugin.v1.ProvisionedResponse
+	27, // 103: dozeplugin.v1.Engine.BackendSocket:output_type -> dozeplugin.v1.BackendSocketResponse
+	29, // 104: dozeplugin.v1.Engine.ConnString:output_type -> dozeplugin.v1.ConnStringResponse
+	10, // 105: dozeplugin.v1.Engine.Plan:output_type -> dozeplugin.v1.SpawnPlan
+	0,  // 106: dozeplugin.v1.Engine.Converge:output_type -> dozeplugin.v1.Empty
+	36, // 107: dozeplugin.v1.Engine.Objects:output_type -> dozeplugin.v1.ObjectsResponse
+	0,  // 108: dozeplugin.v1.Engine.Prune:output_type -> dozeplugin.v1.Empty
+	39, // 109: dozeplugin.v1.Engine.Attributes:output_type -> dozeplugin.v1.AttributesResponse
+	41, // 110: dozeplugin.v1.Engine.BackendURL:output_type -> dozeplugin.v1.BackendURLResponse
+	43, // 111: dozeplugin.v1.Engine.Supervised:output_type -> dozeplugin.v1.SupervisedResponse
+	0,  // 112: dozeplugin.v1.Engine.Hook:output_type -> dozeplugin.v1.Empty
+	0,  // 113: dozeplugin.v1.Engine.CheckHealth:output_type -> dozeplugin.v1.Empty
+	11, // 114: dozeplugin.v1.Engine.RestartPolicy:output_type -> dozeplugin.v1.RestartSpec
+	48, // 115: dozeplugin.v1.Engine.AdvertisedAddr:output_type -> dozeplugin.v1.AddrResponse
+	0,  // 116: dozeplugin.v1.Engine.EnsureTemplate:output_type -> dozeplugin.v1.Empty
+	0,  // 117: dozeplugin.v1.Engine.CloneTemplate:output_type -> dozeplugin.v1.Empty
+	33, // 118: dozeplugin.v1.Engine.WireAddr:output_type -> dozeplugin.v1.WireAddrResponse
+	51, // 119: dozeplugin.v1.Engine.Actions:output_type -> dozeplugin.v1.ActionsResponse
+	53, // 120: dozeplugin.v1.Engine.Resources:output_type -> dozeplugin.v1.ResourcesResponse
+	55, // 121: dozeplugin.v1.Engine.RunAction:output_type -> dozeplugin.v1.RunActionResponse
+	61, // 122: dozeplugin.v1.Engine.DescribeConsole:output_type -> dozeplugin.v1.ConsoleSpec
+	62, // 123: dozeplugin.v1.Engine.Tail:output_type -> dozeplugin.v1.ConsoleRow
+	66, // 124: dozeplugin.v1.Engine.Network:output_type -> dozeplugin.v1.NetworkResponse
+	70, // 125: dozeplugin.v1.Fetcher.ResolveMajor:output_type -> dozeplugin.v1.ResolveMajorResponse
+	72, // 126: dozeplugin.v1.Fetcher.Ensure:output_type -> dozeplugin.v1.EnsureResponse
+	97, // [97:127] is the sub-list for method output_type
+	67, // [67:97] is the sub-list for method input_type
+	67, // [67:67] is the sub-list for extension type_name
+	67, // [67:67] is the sub-list for extension extendee
+	0,  // [0:67] is the sub-list for field type_name
 }
 
 func init() { file_engine_proto_init() }
@@ -4545,7 +4868,7 @@ func file_engine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_engine_proto_rawDesc), len(file_engine_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   75,
+			NumMessages:   81,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

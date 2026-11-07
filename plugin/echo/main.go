@@ -33,8 +33,20 @@ func (driver) Resolve(ctx context.Context, spec engine.VersionSpec, plat engine.
 func (driver) Provision(context.Context, engine.Instance, engine.Toolchain) error { return nil }
 func (driver) Provisioned(string) bool                                            { return true }
 func (driver) BackendSocket(socketDir string, _ int) string                       { return socketDir + "/echo.sock" }
-func (driver) ConnString(engine.Instance, engine.Endpoint) (string, string) {
+func (driver) ConnString(inst engine.Instance, _ engine.Endpoint) (string, string) {
+	if addr, ok := inst.Grant.Addr(engine.MainListener); ok {
+		return "ECHO_URL", "echo://" + addr
+	}
 	return "ECHO_URL", "echo://local"
+}
+
+// Network implements engine.Networked: a tcp main on the declared port, and an
+// http listener beside it with every shape of route.
+func (driver) Network(engine.Instance) engine.Network {
+	return engine.Network{Listeners: []engine.Listener{
+		{Name: engine.MainListener, Protocol: engine.ProtocolTCP},
+		{Name: "ui", Port: 7001, Protocol: engine.ProtocolHTTP, Routes: []string{"@", "api", "sync-@"}},
+	}}
 }
 
 // Plan implements engine.Spawner.

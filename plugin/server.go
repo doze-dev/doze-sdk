@@ -70,6 +70,7 @@ const (
 	capProxyFilter = "proxy_filter"
 	capAdmin       = "admin"
 	capConsole     = "console"
+	capNetworked   = "networked"
 )
 
 func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.CapabilitiesResponse, error) {
@@ -111,6 +112,8 @@ func (s *engineServer) Capabilities(context.Context, *proto.Empty) (*proto.Capab
 	add(ad, capAdmin)
 	_, cs := s.drv.(engine.Console)
 	add(cs, capConsole)
+	_, nw := s.drv.(engine.Networked)
+	add(nw, capNetworked)
 	resp := &proto.CapabilitiesResponse{Capabilities: caps}
 	if sb, ok := s.drv.(engine.SlowBooter); ok {
 		resp.BootBudgetMs = sb.BootBudget().Milliseconds()
@@ -448,6 +451,18 @@ func (s *engineServer) AdvertisedAddr(_ context.Context, req *proto.AddrRequest)
 	}
 	addr, has := pb.AdvertisedAddr(inst)
 	return &proto.AddrResponse{Addr: addr, Ok: has}, nil
+}
+
+func (s *engineServer) Network(_ context.Context, req *proto.NetworkRequest) (*proto.NetworkResponse, error) {
+	nw, ok := s.drv.(engine.Networked)
+	if !ok {
+		return &proto.NetworkResponse{}, nil
+	}
+	inst, err := instanceFromProto(req.Instance)
+	if err != nil {
+		return nil, err
+	}
+	return networkToProto(nw.Network(inst)), nil
 }
 
 // mapLocker is a full in-memory Locker seeded with the host-supplied pins. It

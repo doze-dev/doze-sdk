@@ -66,6 +66,7 @@ Implement only what you need; core checks for each interface.
 | `Templater` | copy-on-write template clone for fast first boot |
 | `ProxyFilter` | own wire protocol — TLS termination, startup parse, cancel routing (runs in your process via an fd hand-off) |
 | `Lifecycle` / `Hooked` / `HealthChecker` / `Restartable` / `PortBinder` / `Attributer` | supervised long-lived processes (the `process` engine uses these) |
+| `Networked` | more than one port, or HTTP names without a port: each listener is `tcp` or `http`, and an http listener may route the instance's name (`@`), a child (`registry`) or a prefixed sibling (`sync-@`) to itself; the host's answer arrives on `Instance.Grant`. Without it: one tcp listener on the declared port. Check yours with `enginetest.CheckNetwork`. |
 | `BackendProvider` / `SlowBooter` / `ErrorWriter` | misc. hooks |
 
 ## How doze runs your engine

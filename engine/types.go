@@ -131,6 +131,10 @@ type Instance struct {
 	// psql or mongosh it converged with, and needs no client of its own. Zero
 	// when the host has no toolchain to give, so check Toolchain.BinDir.
 	Toolchain Toolchain
+	// Grant is the names and addresses the host set up for the instance's
+	// listeners (see Networked). Zero when the host gave no names, or predates
+	// Networked: build URLs from Endpoint then.
+	Grant Grant
 }
 
 // Condition is how "ready" a dependency must be before its dependent boots.

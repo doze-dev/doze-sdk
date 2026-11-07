@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -237,5 +238,48 @@ func TestResolveWithAnOldHost(t *testing.T) {
 	_, err = h.Driver().Resolve(context.Background(), "fetched", engine.Platform{}, noLock{}, nil)
 	if err == nil || !strings.Contains(err.Error(), "upgrade doze") || strings.Contains(err.Error(), "rpc error") {
 		t.Fatalf("a driver that downloads: %v", err)
+	}
+}
+
+// A module that implements engine.Networked: its listeners reach the host over
+// the wire, and the host's grant reaches the module (the echo module's
+// ConnString reads it).
+func TestNetworkRoundTrip(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "echo")
+	build := exec.Command("go", "build", "-o", bin, "./echo")
+	build.Stderr = os.Stderr
+	if err := build.Run(); err != nil {
+		t.Fatalf("building echo plugin: %v", err)
+	}
+	h, err := Launch(bin, nil)
+	if err != nil {
+		t.Fatalf("launch: %v", err)
+	}
+	defer h.Close()
+	nw, ok := h.Driver().(engine.Networked)
+	if !ok {
+		t.Fatalf("a plugin driver is an engine.Networked, got %T", h.Driver())
+	}
+	got := nw.Network(engine.Instance{Name: "e1"})
+	want := engine.Network{Listeners: []engine.Listener{
+		{Name: engine.MainListener, Protocol: engine.ProtocolTCP},
+		{Name: "ui", Port: 7001, Protocol: engine.ProtocolHTTP, Routes: []string{"@", "api", "sync-@"}},
+	}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("network = %+v, want %+v", got, want)
+	}
+	inst := engine.Instance{Name: "e1", Grant: engine.Grant{Host: "e1.shop.doze", Listeners: map[string]engine.GrantedListener{
+		engine.MainListener: {Addr: "e1.shop.doze:7000", Backend: "/s/echo.sock"}}}}
+	if _, u := h.Driver().ConnString(inst, engine.Endpoint{}); u != "echo://e1.shop.doze:7000" {
+		t.Errorf("ConnString with a grant = %q: the grant did not reach the module", u)
+	}
+}
+
+// A module that does not implement engine.Networked answers with no network,
+// without a call over the wire, and the host uses engine.DefaultNetwork.
+func TestAModuleWithoutANetworkHasNone(t *testing.T) {
+	d := &pluginDriver{caps: map[string]bool{}} // no client: any RPC would panic
+	if n := d.Network(engine.Instance{Name: "db", Port: 5432}); len(n.Listeners) != 0 {
+		t.Fatalf("network = %+v, want none", n)
 	}
 }
